@@ -13,7 +13,7 @@ jobs:
         java-version: 17
 
     - name: Generate Report
-      uses: gradle/gradle-build-action@master
+      uses: gradle/gradle-build-action@v2.1.4
       with:
         arguments: jacocoTestReport sonarqube --info
       env:
