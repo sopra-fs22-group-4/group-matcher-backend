@@ -5,13 +5,10 @@ on: [push]
 jobs:
   analysis:
     runs-on: ubuntu-latest
-    container: openjdk:latest
     services:
       postgres:
         image: postgres:latest
         env:
-          POSTGRES_DB: postgres
-          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
         ports:
         - 5432:5432
