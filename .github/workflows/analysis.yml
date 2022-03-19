@@ -16,11 +16,13 @@ jobs:
       uses: gradle/gradle-build-action@v2.1.4
       with:
         arguments: jacocoTestReport
+        cache-disabled: true
       
     - name: Quality Analysis
       uses: gradle/gradle-build-action@v2.1.4
       with:
         arguments: sonarqube
+        cache-disabled: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
