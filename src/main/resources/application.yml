@@ -4,6 +4,10 @@ spring:
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
+  jpa:
+    generate-ddl: true
+    hibernate:
+      ddl-auto: update
 logging:
   level:
     org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
