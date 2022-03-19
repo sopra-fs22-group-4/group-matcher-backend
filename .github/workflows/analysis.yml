@@ -11,14 +11,16 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        
-    - name: Setup Gradle
-      uses: gradle/gradle-build-action@v2
-      
+
     - name: Generate Report
       uses: gradle/gradle-build-action@v2
       with:
-        arguments: jacocoTestReport sonarqube --info
+        arguments: jacocoTestReport
+      
+    - name: Quality Analysis
+      uses: gradle/gradle-build-action@v2
+      with:
+        arguments: sonarqube
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
