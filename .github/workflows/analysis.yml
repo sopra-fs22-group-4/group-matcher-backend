@@ -1,6 +1,6 @@
 name: Backend Quality Analysis
 
-on: push
+on: [push]
 
 jobs:
   gradle:
@@ -11,11 +11,6 @@ jobs:
       with:
         distribution: temurin
         java-version: 17
-
-    - name: Setup and execute Gradle 'test' task
-      uses: gradle/gradle-build-action@v2
-      with:
-        arguments: test
 
     - name: Generate Report
       uses: gradle/gradle-build-action@v2
