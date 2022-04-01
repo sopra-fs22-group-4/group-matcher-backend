@@ -1,7 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher;
 
 import ch.uzh.soprafs22.groupmatcher.controller.MatcherController;
-import ch.uzh.soprafs22.groupmatcher.model.MatcherDTO;
+import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
