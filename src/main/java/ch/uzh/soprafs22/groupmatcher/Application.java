@@ -1,6 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher;
 
 import lombok.NonNull;
+import org.modelmapper.ModelMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -33,6 +34,11 @@ public class Application {
         filter.setMaxPayloadLength(10000);
         filter.setIncludeHeaders(false);
         return filter;
+    }
+
+    @Bean
+    public ModelMapper mapper() {
+        return new ModelMapper();
     }
 
 }
