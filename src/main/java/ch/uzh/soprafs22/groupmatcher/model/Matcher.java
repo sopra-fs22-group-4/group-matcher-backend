@@ -8,7 +8,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import javax.persistence.*;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -40,6 +42,22 @@ public class Matcher {
 
     private Integer minGroupSize;
 
-    @OneToMany(mappedBy = "matcher")
+    @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
     private List<Question> questions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
+    private List<Email> emails = new ArrayList<>();
+
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinTable(name = "matcher_admins",
+            joinColumns = @JoinColumn(name = "matcher_id"),
+            inverseJoinColumns = @JoinColumn(name = "admins_id"))
+    private Set<Admin> admins = new LinkedHashSet<>();
+
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinTable(name = "matcher_students",
+            joinColumns = @JoinColumn(name = "matcher_id"),
+            inverseJoinColumns = @JoinColumn(name = "students_id"))
+    private Set<Student> students = new LinkedHashSet<>();
+
 }

@@ -7,7 +7,18 @@ spring:
   jpa:
     generate-ddl: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
+  mail:
+    host: ${MAIL_HOST}
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 logging:
   level:
     org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
@@ -15,3 +26,5 @@ server:
   port: ${PORT:8080}
   error:
     include-message: always
+db-scheduler:
+  enabled: false
