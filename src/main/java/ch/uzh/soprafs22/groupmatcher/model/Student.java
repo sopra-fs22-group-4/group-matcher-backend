@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -20,4 +22,10 @@ public class Student {
     private String password;
 
     private String name;
+
+    @ManyToMany(mappedBy = "students",cascade = CascadeType.ALL)
+    private Set<Matcher> matchers  = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "student",cascade = CascadeType.ALL)
+    private Set<QuestionRes> questionResSet = new LinkedHashSet<>();
 }
