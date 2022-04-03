@@ -21,7 +21,6 @@ public class AdminController {
     public Admin createAdmin(@RequestBody UserDTO newAdmin) {return userService.createAdmin(newAdmin);}
 
     @PostMapping("/login")
-    @ResponseStatus(HttpStatus.OK)
     public Admin loginAdmin(@RequestBody UserDTO admin) {return userService.checkValidLogin(admin);}
 
 }

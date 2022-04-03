@@ -30,7 +30,6 @@ public class AdminService {
         // saves the given entity but data is only persisted in the database once
         // flush() is called
         newAdmin = adminRepository.save(newAdmin);
-        adminRepository.flush();
 
         log.debug("Created Information for admin: {}", newAdmin);
 
