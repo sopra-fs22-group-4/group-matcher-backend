@@ -3,22 +3,21 @@ package ch.uzh.soprafs22.groupmatcher.controller;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.service.AdminService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import ch.uzh.soprafs22.groupmatcher.service.EmailService;
+import com.google.gson.Gson;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.web.server.ResponseStatusException;
 
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,66 +31,45 @@ class AdminControllerTest {
     @MockBean
     private AdminService adminService;
 
+    @MockBean
+    private EmailService emailService;
+
+    private UserDTO testUserDTO;
+
+    private Admin testAdmin;
+
+    @BeforeEach
+    public void setup() {
+        testUserDTO = new UserDTO();
+        testUserDTO.setEmail("test@email.com");
+        testUserDTO.setPassword("test");
+        testAdmin = new Admin();
+        testAdmin.setId(1L);
+        testAdmin.setEmail(testUserDTO.getEmail());
+        testAdmin.setPassword(testUserDTO.getPassword());
+    }
+
     @Test
-    void createAdmin_successful() throws Exception{
-
-        // expected output
-        Admin admin = new Admin();
-        admin.setId(1L);
-        admin.setEmail("test@test.test");
-        admin.setPassword("test");
-
-        ModelMapper mapper = new ModelMapper();
-        UserDTO userDTO = mapper.map(admin, UserDTO.class);
-
-        given(adminService.createAdmin(Mockito.any())).willReturn(admin);
-
-        // when/then -> do the request + validate the result
-        MockHttpServletRequestBuilder postRequest = post("/register")
+    void createAdmin_successful() throws Exception {
+        given(adminService.createAdmin(any(UserDTO.class))).willReturn(testAdmin);
+        mockMvc.perform(post("/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(asJsonString(userDTO));
-
-        // then
-        mockMvc.perform(postRequest)
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id", is(admin.getId().intValue())))
-                .andExpect(jsonPath("$.email", is(admin.getEmail())));
+                .content(new Gson().toJson(testUserDTO)))
+                .andExpect(status().isCreated());
+        verify(emailService, times(1)).sendAccountVerificationEmail(testUserDTO.getEmail());
     }
 
     @Test
     void loginAdmin_successful() throws Exception {
-        // expected output
-        Admin admin = new Admin();
-        admin.setId(1L);
-        admin.setEmail("test@test.test");
-        admin.setPassword("test");
-        admin.setVerified(true);
-
-        ModelMapper mapper = new ModelMapper();
-        UserDTO userDTO = mapper.map(admin, UserDTO.class);
-
-        given(adminService.checkValidLogin(Mockito.any())).willReturn(admin);
-
-        // when/then -> do the request + validate the result
-        MockHttpServletRequestBuilder postRequest = post("/login")
+        testAdmin.setVerified(true);
+        given(adminService.checkValidLogin(any(UserDTO.class))).willReturn(testAdmin);
+        mockMvc.perform(post("/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(asJsonString(userDTO));
-
-        // then
-        mockMvc.perform(postRequest)
+                .content(new Gson().toJson(testUserDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(admin.getId().intValue())))
-                .andExpect(jsonPath("$.email", is(admin.getEmail())))
-                .andExpect(jsonPath("$.verified", is(admin.isVerified())));
-    }
-
-    private String asJsonString(final Object object) {
-        try {
-            return new ObjectMapper().writeValueAsString(object);
-        } catch (JsonProcessingException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    String.format("The request body could not be created.%s", e));
-        }
+                .andExpect(jsonPath("$.id", is(testAdmin.getId().intValue())))
+                .andExpect(jsonPath("$.email", is(testAdmin.getEmail())))
+                .andExpect(jsonPath("$.verified", is(testAdmin.isVerified())));
     }
 
 }

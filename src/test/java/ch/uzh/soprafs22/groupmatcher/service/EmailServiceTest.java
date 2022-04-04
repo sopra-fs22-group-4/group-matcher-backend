@@ -1,10 +1,9 @@
-package ch.uzh.soprafs22.groupmatcher;
+package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.model.Email;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
 import ch.uzh.soprafs22.groupmatcher.repository.EmailRepository;
-import ch.uzh.soprafs22.groupmatcher.service.EmailService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -14,6 +13,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -53,10 +53,28 @@ class EmailServiceTest {
         emailService.sendEmailsScheduledForNow();
         verify(emailRepository, times(1)).markEmailAsSent(testEmail.getId());
         verify(mailSender).send(messageCaptor.capture());
-        SimpleMailMessage actualEmail = messageCaptor.getValue();
-        assertEquals(testEmail.getSubject(), actualEmail.getSubject());
-        assertEquals(testEmail.getContent(), actualEmail.getText());
-        assertNotNull(actualEmail.getTo());
-        assertEquals(testEmail.getRecipients().size(), actualEmail.getTo().length);
+        SimpleMailMessage sentEmail = messageCaptor.getValue();
+        assertEquals(testEmail.getSubject(), sentEmail.getSubject());
+        assertEquals(testEmail.getContent(), sentEmail.getText());
+        assertNotNull(sentEmail.getTo());
+        assertEquals(testEmail.getRecipients().length, sentEmail.getTo().length);
+    }
+
+    @Test
+    void sendAccountVerificationEmailTest() {
+        emailService.sendAccountVerificationEmail("test@email.com");
+        verify(mailSender).send(messageCaptor.capture());
+        SimpleMailMessage sentEmail = messageCaptor.getValue();
+        assertNotNull(sentEmail.getTo());
+        assertEquals(List.of("test@email.com"), Arrays.stream(sentEmail.getTo()).toList());
+    }
+
+    @Test
+    void sendResponseVerificationEmailTest() {
+        emailService.sendResponseVerificationEmail("test@email.com");
+        verify(mailSender).send(messageCaptor.capture());
+        SimpleMailMessage sentEmail = messageCaptor.getValue();
+        assertNotNull(sentEmail.getTo());
+        assertEquals(List.of("test@email.com"), Arrays.stream(sentEmail.getTo()).toList());
     }
 }

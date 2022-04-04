@@ -18,16 +18,27 @@ public class EmailService {
 
     private JavaMailSender mailSender;
 
+    private SimpleMailMessage composeMessage(String subject, String content, String... recipients) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setSubject(subject);
+        message.setFrom("notify@groupmatcher.ch");
+        message.setTo(recipients);
+        message.setText(content);
+        return message;
+    }
+
+    public void sendAccountVerificationEmail(String email) {
+        mailSender.send(composeMessage("Verify Account", "Click here to verify your account", email));
+    }
+
+    public void sendResponseVerificationEmail(String email) {
+        mailSender.send(composeMessage("Verify Response", "Click here to verify your response", email));
+    }
+
     public void sendEmailsScheduledForNow() {
         emailRepository.findBySendAtIsBeforeAndSentFalse(ZonedDateTime.now()).forEach(email -> {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setSubject(email.getSubject());
-            message.setFrom("notify@groupmatcher.ch");
-            message.setTo(email.getRecipients().toArray(new String[0]));
-            message.setText(email.getContent());
-            mailSender.send(message);
+            mailSender.send(composeMessage(email.getSubject(), email.getContent(), email.getRecipients()));
             emailRepository.markEmailAsSent(email.getId());
-            log.info("Sent email regarding matcher {} to {} recipients", email.getMatcher().getId(), email.getRecipients().size());
         });
     }
 }
