@@ -5,7 +5,6 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import java.time.ZonedDateTime;
-import java.util.List;
 
 @Getter
 @Setter
@@ -27,7 +26,7 @@ public class Email {
 
     private String content = "Content";
 
-    public List<String> getRecipients() {
-        return matcher.getStudents().stream().map(Student::getEmail).toList();
+    public String[] getRecipients() {
+        return matcher.getStudents().stream().map(Student::getEmail).toArray(String[]::new);
     }
 }

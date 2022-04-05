@@ -5,113 +5,100 @@ import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.repository.AdminRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.web.server.ResponseStatusException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.AdditionalAnswers.returnsFirstArg;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
+
+@SpringBootTest(classes = {AdminService.class})
 class AdminServiceTest {
 
-    @Mock
+    @MockBean
     private AdminRepository adminRepository;
 
-    @InjectMocks
+    @Autowired
     private AdminService adminService;
 
+    private UserDTO testUserDTO;
+
     private Admin testAdmin;
-    private UserDTO userDTO;
 
     @BeforeEach
     public void setup() {
-        MockitoAnnotations.openMocks(this);
-
-        // given
+        testUserDTO = new UserDTO();
+        testUserDTO.setEmail("test@email.com");
+        testUserDTO.setPassword("test");
         testAdmin = new Admin();
         testAdmin.setId(1L);
-        testAdmin.setEmail("test@test.test");
-        testAdmin.setPassword("test");
-
-        ModelMapper mapper = new ModelMapper();
-        userDTO = mapper.map(testAdmin, UserDTO.class);
-
-        // when -> any object is being save in the userRepository -> return the dummy testAdmin
-        Mockito.when(adminRepository.save(Mockito.any())).thenReturn(testAdmin);
+        testAdmin.setEmail(testUserDTO.getEmail());
+        testAdmin.setPassword(testUserDTO.getPassword());
+        given(adminRepository.save(any(Admin.class))).willAnswer(returnsFirstArg());
     }
+
     @Test
     void createAdmin_successful() {
-        // create the testAdmin
-        Admin createdAdmin = adminService.createAdmin(userDTO);
-
-        // then
-        Mockito.verify(adminRepository, Mockito.times(1)).save(Mockito.any());
-
-        assertEquals(testAdmin.getId(), createdAdmin.getId());
-        assertEquals(testAdmin.getPassword(), createdAdmin.getPassword());
-        assertEquals(testAdmin.getEmail(), createdAdmin.getEmail());
+        Admin createdAdmin = adminService.createAdmin(testUserDTO);
+        verify(adminRepository, times(1)).save(any());
+        assertEquals(testUserDTO.getPassword(), createdAdmin.getPassword());
+        assertEquals(testUserDTO.getEmail(), createdAdmin.getEmail());
     }
 
     @Test
     void createAdmin_alreadyExist_throwsException() {
-
-        // when
-        Mockito.when(adminRepository.findByEmail(Mockito.any())).thenReturn(testAdmin);
-
-        // then -> attempt to create second admin with same Email -> check that an error
-        // is thrown
-        assertThrows(ResponseStatusException.class, () -> adminService.createAdmin(userDTO));
-
+        given(adminRepository.existsByEmail(testUserDTO.getEmail())).willReturn(true);
+        assertThrows(ResponseStatusException.class, () -> adminService.createAdmin(testUserDTO));
     }
 
     @Test
     void checkValidLogin_successful() {
-
-        // when
         testAdmin.setVerified(true);
-        Mockito.when(adminRepository.findByEmail(Mockito.any())).thenReturn(testAdmin);
-
-        // then
-        Admin loginAdmin = adminService.checkValidLogin(userDTO);
-
-        assertEquals(testAdmin.getId(), loginAdmin.getId());
-        assertEquals(testAdmin.getPassword(), loginAdmin.getPassword());
-        assertEquals(testAdmin.getEmail(), loginAdmin.getEmail());
-        assertTrue(loginAdmin.isVerified());
+        given(adminRepository.findByEmail(testUserDTO.getEmail())).willReturn(Optional.of(testAdmin));
+        Admin returnedAdmin = adminService.checkValidLogin(testUserDTO);
+        assertEquals(testAdmin.getId(), returnedAdmin.getId());
+        assertEquals(testAdmin.getPassword(), returnedAdmin.getPassword());
+        assertEquals(testAdmin.getEmail(), returnedAdmin.getEmail());
+        assertTrue(returnedAdmin.isVerified());
     }
 
     @Test
     void checkValidLogin_notVerified_throwsException() {
-
-        // when
-        testAdmin.setVerified(false);
-        Mockito.when(adminRepository.findByEmail(Mockito.any())).thenReturn(testAdmin);
-
-        // then
-        assertThrows(ResponseStatusException.class, () -> adminService.checkValidLogin(userDTO));
+        assertFalse(testAdmin.isVerified());
+        given(adminRepository.findByEmail(testUserDTO.getEmail())).willReturn(Optional.of(testAdmin));
+        assertThrows(ResponseStatusException.class, () -> adminService.checkValidLogin(testUserDTO));
     }
 
     @Test
     void checkValidLogin_notRegistered_throwsException() {
-
-        // when
-        Mockito.when(adminRepository.findByEmail(Mockito.any())).thenReturn(null);
-
-        // then
-        assertThrows(ResponseStatusException.class, () -> adminService.checkValidLogin(userDTO));
+        given(adminRepository.findByEmail(testUserDTO.getEmail())).willReturn(Optional.empty());
+        assertThrows(ResponseStatusException.class, () -> adminService.checkValidLogin(testUserDTO));
     }
 
     @Test
     void checkValidLogin_wrongPassword_throwsException() {
-
-        // when
         testAdmin.setVerified(true);
         testAdmin.setPassword("wrongPassword");
-        Mockito.when(adminRepository.findByEmail(Mockito.any())).thenReturn(testAdmin);
+        given(adminRepository.findByEmail(testUserDTO.getEmail())).willReturn(Optional.of(testAdmin));
+        assertThrows(ResponseStatusException.class, () -> adminService.checkValidLogin(testUserDTO));
+    }
 
-        // then
-        assertThrows(ResponseStatusException.class, () -> adminService.checkValidLogin(userDTO));
+    @Test
+    void verifyAccount_successful() {
+        assertFalse(testAdmin.isVerified());
+        given(adminRepository.findById(testAdmin.getId())).willReturn(Optional.of(testAdmin));
+        Admin returnedAdmin = adminService.verifyAccount(testAdmin.getId());
+        assertTrue(returnedAdmin.isVerified());
+    }
+
+    @Test
+    void verifyAccount_notRegistered_throwsException() {
+        given(adminRepository.findById(testAdmin.getId())).willReturn(Optional.empty());
+        assertThrows(ResponseStatusException.class, () -> adminService.verifyAccount(1L));
     }
 }

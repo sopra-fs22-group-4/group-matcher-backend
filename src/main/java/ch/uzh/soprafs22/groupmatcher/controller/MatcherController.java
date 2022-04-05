@@ -1,6 +1,5 @@
 package ch.uzh.soprafs22.groupmatcher.controller;
 
-import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
 import ch.uzh.soprafs22.groupmatcher.service.MatcherService;
 import lombok.AllArgsConstructor;
@@ -20,8 +19,4 @@ public class MatcherController {
         matcherService.createMatcher(newMatcher);
     }
 
-    @GetMapping("/{partialName}")
-    public Matcher getMatcherByPartialName(@PathVariable String partialName) {
-        return matcherService.getMatcherByPartialName(partialName);
-    }
 }
