@@ -51,6 +51,7 @@ public class MatcherService {
             newTeam.setStudents(teamMembers);
             newTeam.setSimilarityScore(teamEntry.getValue());
             teamMembers.forEach(student -> student.setTeam(newTeam));
+            matcher.getTeams().add(newTeam);
             teamRepository.save(newTeam);
         }
     }

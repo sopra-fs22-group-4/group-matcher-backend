@@ -6,6 +6,7 @@ import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -16,5 +17,5 @@ public class QuestionDTO {
     private Float weight;
     private QuestionCategory questionCategory;
     private QuestionType questionType;
-    private List<Answer> answers;
+    private List<Answer> answers = new ArrayList<>();
 }

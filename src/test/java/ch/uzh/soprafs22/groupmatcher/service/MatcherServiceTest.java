@@ -1,7 +1,11 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
+import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
+import ch.uzh.soprafs22.groupmatcher.constant.QuestionCategory;
+import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
+import ch.uzh.soprafs22.groupmatcher.dto.QuestionDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Question;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
@@ -51,6 +55,28 @@ class MatcherServiceTest {
         verify(matcherRepository, times(1)).save(any());
         assertEquals(testMatcherDTO.getName(), createdMatcher.getName());
         assertEquals(testMatcherDTO.getGroupSize(), createdMatcher.getGroupSize());
+        assertEquals(MatchingStrategy.MOST_SIMILAR, createdMatcher.getMatchingStrategy());
+    }
+
+    @Test
+    void createMatcherWithQuestion_successful() {
+        MatcherDTO testMatcherDTO = new MatcherDTO();
+        testMatcherDTO.setName("Test Matcher");
+        testMatcherDTO.setGroupSize(5);
+        QuestionDTO testQuestionDTO = new QuestionDTO();
+        testQuestionDTO.setOrdinalNum(1);
+        testQuestionDTO.setContent("Q1");
+        testQuestionDTO.setQuestionType(QuestionType.SINGLE_CHOICE);
+        testQuestionDTO.setQuestionCategory(QuestionCategory.KNOWLEDGE);
+        testMatcherDTO.setQuestions(List.of(testQuestionDTO));
+        given(matcherRepository.save(any(Matcher.class))).willAnswer(returnsFirstArg());
+        Matcher createdMatcher = matcherService.createMatcher(testMatcherDTO);
+        assertEquals(1, createdMatcher.getQuestions().size());
+        assertEquals(testQuestionDTO.getOrdinalNum(), createdMatcher.getQuestions().get(0).getOrdinalNum());
+        assertEquals(testQuestionDTO.getContent(), createdMatcher.getQuestions().get(0).getContent());
+        assertEquals(testQuestionDTO.getQuestionType(), createdMatcher.getQuestions().get(0).getQuestionType());
+        assertEquals(testQuestionDTO.getQuestionCategory(), createdMatcher.getQuestions().get(0).getQuestionCategory());
+        assertTrue(createdMatcher.getQuestions().get(0).getAnswers().isEmpty());
     }
 
     @Test
@@ -110,6 +136,7 @@ class MatcherServiceTest {
         verify(studentRepository, times(numTeams)).findByIdIn(any());
         verify(teamRepository, times(numTeams)).save(any());
 
+        assertEquals(numTeams, testMatcher.getTeams().size());
         assertNotNull(student1.getTeam());
         assertNotNull(student3.getTeam());
         assertNotNull(student4.getTeam());

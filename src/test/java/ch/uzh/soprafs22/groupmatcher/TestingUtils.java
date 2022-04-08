@@ -1,5 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher;
 
+import ch.uzh.soprafs22.groupmatcher.constant.QuestionCategory;
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
 import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import ch.uzh.soprafs22.groupmatcher.model.Question;
@@ -27,6 +28,7 @@ public class TestingUtils {
     public static Question createQuestion(Long questionId, int numAnswers) {
         Question question = new Question();
         question.setId(questionId);
+        question.setQuestionCategory(QuestionCategory.KNOWLEDGE);
         question.setQuestionType(QuestionType.SINGLE_CHOICE);
         question.setAnswers(IntStream.range(0, numAnswers).mapToObj(num -> createAnswer(question)).toList());
         return question;
