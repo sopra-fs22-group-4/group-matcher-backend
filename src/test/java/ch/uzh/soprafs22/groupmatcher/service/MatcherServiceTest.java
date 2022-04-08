@@ -78,7 +78,7 @@ class MatcherServiceTest {
         Student student5 = createStudent(15L);
         Student student6 = createStudent(16L);
         Student student7 = createStudent(17L);
-        testMatcher.setStudents(Set.of(student1, student2, student3, student4, student5));
+        testMatcher.setStudents(Set.of(student1, student2, student3, student4, student5, student6, student7));
         Question question1 = createQuestion(2L, 2);
         Question question2 = createQuestion(4L, 4);
         testMatcher.setQuestions(List.of(question1, question2));
@@ -121,11 +121,27 @@ class MatcherServiceTest {
         verify(studentRepository, times(numTeams)).findByIdIn(any());
         verify(teamRepository, times(numTeams)).save(any());
 
-        assertEquals(student1.getTeam(), student3.getTeam());
-        assertEquals(student3.getTeam(), student4.getTeam());
-        assertEquals(student5.getTeam(), student6.getTeam());
-        assertEquals(student6.getTeam(), student7.getTeam());
-        assertNotEquals(student1.getTeam(), student7.getTeam());
+        assertNotNull(student1.getTeam());
+        assertNotNull(student3.getTeam());
+        assertNotNull(student4.getTeam());
+        assertNotNull(student5.getTeam());
+        assertNotNull(student6.getTeam());
+        assertNotNull(student7.getTeam());
         assertNull(student2.getTeam());
+
+        assertEquals(testMatcher, student1.getTeam().getMatcher());
+        assertEquals(testMatcher, student7.getTeam().getMatcher());
+
+        assertEquals(testMatcher.getGroupSize(), student1.getTeam().getStudents().size());
+        assertTrue(student1.getTeam().getStudents().contains(student3));
+        assertTrue(student1.getTeam().getStudents().contains(student4));
+
+        assertEquals(testMatcher.getGroupSize(), student5.getTeam().getStudents().size());
+        assertTrue(student5.getTeam().getStudents().contains(student6));
+        assertTrue(student5.getTeam().getStudents().contains(student7));
+
+        Double maxSimilarityScore = testMatcher.getQuestions().stream().mapToDouble(question -> question.getAnswers().size()).sum();
+        assertEquals(maxSimilarityScore, student1.getTeam().getSimilarityScore());
+        assertTrue(student7.getTeam().getSimilarityScore() < maxSimilarityScore);
     }
 }

@@ -1,8 +1,10 @@
 package ch.uzh.soprafs22.groupmatcher.model;
 
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionCategory;
+import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.NotImplementedException;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -26,7 +28,11 @@ public class Question {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private QuestionCategory questionCategory;
+    private QuestionType questionType = QuestionType.SINGLE_CHOICE;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private QuestionCategory questionCategory = QuestionCategory.KNOWLEDGE;
 
     @ManyToOne
     @JoinColumn(name = "matcher_id")
@@ -36,6 +42,9 @@ public class Question {
     private List<Answer> answers = new ArrayList<>();
 
     public Double calculateSimilarity(Integer mostCommonCount) {
-        return (((double) mostCommonCount - 1) / ((double) matcher.getGroupSize() - 1)) * answers.size();
+        return switch (questionType) {
+            case SINGLE_CHOICE -> (((double) mostCommonCount - 1) / ((double) matcher.getGroupSize() - 1)) * answers.size();
+            case MULTIPLE_CHOICE, TEXT -> throw new NotImplementedException();
+        };
     }
 }
