@@ -4,8 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -13,18 +13,19 @@ import java.util.Set;
 public class Team {
     @Id
     @GeneratedValue
-    private long id;
+    private Long id;
 
-    private Float similarityScore;
+    private Double similarityScore;
 
-    private Float knowledgeScore;
+    private Double knowledgeScore;
 
-    private Float skillScore;
+    private Double skillScore;
 
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(name = "team_students",
-            joinColumns = @JoinColumn(name = "team_id"),
-            inverseJoinColumns = @JoinColumn(name = "students_id"))
-    private Set<Student> students = new LinkedHashSet<>();
+    @ManyToOne
+    @JoinColumn(name = "matcher_id")
+    private Matcher matcher;
+
+    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL)
+    private List<Student> students = new ArrayList<>();
 
 }

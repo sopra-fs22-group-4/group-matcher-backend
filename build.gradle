@@ -25,6 +25,8 @@ dependencies {
     implementation 'org.modelmapper:modelmapper:3.1.0'
     implementation 'com.github.kagkarlsson:db-scheduler-spring-boot-starter:11.0'
     implementation 'com.google.code.gson:gson:2.9.0'
+    implementation 'com.google.guava:guava:31.1-jre'
+    implementation 'org.apache.commons:commons-math3:3.6.1'
 }
 
 test {

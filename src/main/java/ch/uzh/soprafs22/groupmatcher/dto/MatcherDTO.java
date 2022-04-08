@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -15,5 +17,7 @@ public class MatcherDTO {
     private ZonedDateTime publishDate;
     private ZonedDateTime dueDate;
     private boolean reminder;
+    private Integer groupSize;
     private Integer minGroupSize;
+    private List<QuestionDTO> questions = new ArrayList<>();
 }

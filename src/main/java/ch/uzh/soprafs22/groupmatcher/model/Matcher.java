@@ -38,7 +38,9 @@ public class Matcher {
     private boolean reminder;
 
     @Enumerated(EnumType.STRING)
-    private MatchingStrategy matchingStrategy;
+    private MatchingStrategy matchingStrategy = MatchingStrategy.MOST_SIMILAR;
+
+    private Integer groupSize;
 
     private Integer minGroupSize;
 
@@ -54,10 +56,10 @@ public class Matcher {
             inverseJoinColumns = @JoinColumn(name = "admins_id"))
     private Set<Admin> admins = new LinkedHashSet<>();
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinTable(name = "matcher_students",
-            joinColumns = @JoinColumn(name = "matcher_id"),
-            inverseJoinColumns = @JoinColumn(name = "students_id"))
+    @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
     private Set<Student> students = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
+    private List<Team> teams = new ArrayList<>();
 
 }

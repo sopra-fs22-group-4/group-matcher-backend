@@ -16,7 +16,6 @@ public interface EmailRepository extends JpaRepository<Email, Long> {
 
     @Transactional
     @Modifying
-    @Query("UPDATE Email email SET email.sent = true WHERE email.id = :id")
+    @Query("UPDATE Email email SET email.sent = true, email.sendAt = current_timestamp WHERE email.id = :id")
     void markEmailAsSent(@Param("id") Long id);
-
 }

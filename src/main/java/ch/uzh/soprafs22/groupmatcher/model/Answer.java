@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -13,13 +15,15 @@ public class Answer {
     @GeneratedValue
     private Long id;
 
-    @Column(nullable = false)
     private String content;
 
-    @Column(nullable = false)
     private Integer ordinalNum;
 
     @ManyToOne
     @JoinColumn(name = "question_id")
     private Question question;
+
+    @ManyToMany(mappedBy = "answers", cascade = CascadeType.ALL)
+    private List<Student> students = new ArrayList<>();
+
 }
