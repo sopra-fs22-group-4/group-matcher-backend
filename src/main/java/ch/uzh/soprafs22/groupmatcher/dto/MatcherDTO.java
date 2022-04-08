@@ -15,5 +15,6 @@ public class MatcherDTO {
     private ZonedDateTime publishDate;
     private ZonedDateTime dueDate;
     private boolean reminder;
+    private Integer groupSize;
     private Integer minGroupSize;
 }

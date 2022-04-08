@@ -1,7 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.model;
 
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionCategory;
-import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -29,14 +28,14 @@ public class Question {
     @Enumerated(EnumType.STRING)
     private QuestionCategory questionCategory;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private QuestionType questionType;
-
     @ManyToOne
     @JoinColumn(name = "matcher_id")
     private Matcher matcher;
 
-    @OneToMany(mappedBy = "question")
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL)
     private List<Answer> answers = new ArrayList<>();
+
+    public Double calculateSimilarity(Integer mostCommonCount) {
+        return (((double) mostCommonCount - 1) / ((double) matcher.getGroupSize() - 1)) * answers.size();
+    }
 }

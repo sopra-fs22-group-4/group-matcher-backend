@@ -42,5 +42,6 @@ class ApplicationTests {
         assertTrue(scheduler.getCurrentlyExecuting().isEmpty());
         scheduler.schedule(checkScheduledEmailsTask.instance("1"), Instant.now());
         verify(emailService, times(1)).sendEmailsScheduledForNow();
+
     }
 }
