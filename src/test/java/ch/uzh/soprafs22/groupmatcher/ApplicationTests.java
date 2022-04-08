@@ -19,8 +19,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @SpringBootTest
-@TestPropertySource(properties = {"db-scheduler.enabled=true", "spring.mail.host=127.0.0.1",
-        "spring.mail.port=3025", "spring.mail.username=test", "spring.mail.password=test"})
+@TestPropertySource(properties = {"db-scheduler.enabled=true"})
 class ApplicationTests {
 
     @Autowired
@@ -42,6 +41,5 @@ class ApplicationTests {
         assertTrue(scheduler.getCurrentlyExecuting().isEmpty());
         scheduler.schedule(checkScheduledEmailsTask.instance("1"), Instant.now());
         verify(emailService, times(1)).sendEmailsScheduledForNow();
-
     }
 }

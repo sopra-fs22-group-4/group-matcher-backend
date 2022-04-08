@@ -18,10 +18,8 @@ public class Question {
     @GeneratedValue
     private Long id;
 
-    @Column(nullable = false)
     private Integer ordinalNum;
 
-    @Column(nullable = false)
     private String content;
 
     private Float weight;

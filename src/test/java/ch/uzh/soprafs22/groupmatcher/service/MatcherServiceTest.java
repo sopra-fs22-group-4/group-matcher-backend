@@ -1,7 +1,10 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
+import ch.uzh.soprafs22.groupmatcher.TestingUtils;
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
-import ch.uzh.soprafs22.groupmatcher.model.*;
+import ch.uzh.soprafs22.groupmatcher.model.Matcher;
+import ch.uzh.soprafs22.groupmatcher.model.Question;
+import ch.uzh.soprafs22.groupmatcher.model.Student;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.TeamRepository;
@@ -11,9 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
@@ -37,23 +41,6 @@ class MatcherServiceTest {
     @Autowired
     private MatcherService matcherService;
 
-    private Matcher testMatcher;
-
-    private Student createStudent(Long studentId) {
-        Student student = new Student();
-        student.setId(studentId);
-        student.setEmail("test-%s@email.com".formatted(studentId));
-        return student;
-    }
-
-    private Question createQuestion(Long questionId, Integer numAnswers) {
-        Question question = new Question();
-        question.setId(questionId);
-        question.setMatcher(testMatcher);
-        question.setAnswers(IntStream.range(0, numAnswers).mapToObj(num -> new Answer()).toList());
-        return question;
-    }
-
     @Test
     void createMatcher_successful() {
         MatcherDTO testMatcherDTO = new MatcherDTO();
@@ -68,19 +55,21 @@ class MatcherServiceTest {
 
     @Test
     void createTeams_successful() {
-        testMatcher = new Matcher();
+        Matcher testMatcher = new Matcher();
         testMatcher.setId(1L);
         testMatcher.setGroupSize(3);
-        Student student1 = createStudent(11L);
-        Student student2 = createStudent(12L);
-        Student student3 = createStudent(13L);
-        Student student4 = createStudent(14L);
-        Student student5 = createStudent(15L);
-        Student student6 = createStudent(16L);
-        Student student7 = createStudent(17L);
+        Student student1 = TestingUtils.createStudent(11L);
+        Student student2 = TestingUtils.createStudent(12L);
+        Student student3 = TestingUtils.createStudent(13L);
+        Student student4 = TestingUtils.createStudent(14L);
+        Student student5 = TestingUtils.createStudent(15L);
+        Student student6 = TestingUtils.createStudent(16L);
+        Student student7 = TestingUtils.createStudent(17L);
         testMatcher.setStudents(Set.of(student1, student2, student3, student4, student5, student6, student7));
-        Question question1 = createQuestion(2L, 2);
-        Question question2 = createQuestion(4L, 4);
+        Question question1 = TestingUtils.createQuestion(2L, 2);
+        Question question2 = TestingUtils.createQuestion(4L, 4);
+        question1.setMatcher(testMatcher);
+        question2.setMatcher(testMatcher);
         testMatcher.setQuestions(List.of(question1, question2));
 
         int numTeams = testMatcher.getStudents().size() / testMatcher.getGroupSize();

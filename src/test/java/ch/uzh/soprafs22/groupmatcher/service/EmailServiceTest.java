@@ -1,8 +1,8 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
+import ch.uzh.soprafs22.groupmatcher.TestingUtils;
 import ch.uzh.soprafs22.groupmatcher.model.Email;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
-import ch.uzh.soprafs22.groupmatcher.model.Student;
 import ch.uzh.soprafs22.groupmatcher.repository.EmailRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -13,13 +13,14 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = {EmailService.class})
@@ -39,17 +40,21 @@ class EmailServiceTest {
 
     @Test
     void sendEmailsScheduledForNowTest() {
-        Student testStudent = new Student();
-        testStudent.setEmail("test@email.com");
         Matcher testMatcher = new Matcher();
         testMatcher.setId(1L);
-        testMatcher.setStudents(Set.of(testStudent));
+        testMatcher.setStudents(Set.of(TestingUtils.createStudent(11L)));
         Email testEmail = new Email();
         testEmail.setId(2L);
+        testEmail.setSendAt(ZonedDateTime.now());
         testEmail.setSubject("Test subject");
         testEmail.setContent("Test content");
         testEmail.setMatcher(testMatcher);
-        doReturn(List.of(testEmail)).when(emailRepository).findBySendAtIsBeforeAndSentFalse(any());
+        testMatcher.setEmails(List.of(testEmail));
+        given(emailRepository.findBySendAtIsBeforeAndSentFalse(any())).willReturn(testMatcher.getEmails());
+        doAnswer(invocation -> {
+            testEmail.setSent(true);
+            return null;
+        }).when(emailRepository).markEmailAsSent(testEmail.getId());
         emailService.sendEmailsScheduledForNow();
         verify(emailRepository, times(1)).markEmailAsSent(testEmail.getId());
         verify(mailSender).send(messageCaptor.capture());
@@ -58,6 +63,7 @@ class EmailServiceTest {
         assertEquals(testEmail.getContent(), sentEmail.getText());
         assertNotNull(sentEmail.getTo());
         assertEquals(testEmail.getRecipients().length, sentEmail.getTo().length);
+        assertTrue(testEmail.isSent());
     }
 
     @Test
