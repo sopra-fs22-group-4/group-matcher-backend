@@ -50,9 +50,6 @@ public class Matcher {
     @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
     private List<Email> emails = new ArrayList<>();
 
-    @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
-    private Set<QuestionRes> QuestionResSet = new LinkedHashSet<>();
-
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinTable(name = "matcher_admins",
             joinColumns = @JoinColumn(name = "matcher_id"),
