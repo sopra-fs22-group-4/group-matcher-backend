@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -23,4 +25,7 @@ public class Admin {
 
     @Column(nullable = false)
     private boolean verified = false;
+
+    @ManyToMany(mappedBy = "admins",cascade = CascadeType.ALL)
+    private Set<Matcher> matchers  = new LinkedHashSet<>();
 }

@@ -12,10 +12,10 @@ import java.util.stream.IntStream;
 
 public class TestingUtils {
 
-    public static Student createStudent(Long studentId) {
+    public static Student createStudent(Long studentId, Integer emailNum) {
         Student student = new Student();
         student.setId(studentId);
-        student.setEmail("test-%s@email.com".formatted(studentId));
+        student.setEmail("test-%s@email.com".formatted(emailNum));
         return student;
     }
 
@@ -35,7 +35,7 @@ public class TestingUtils {
     }
 
     public static Set<Student> createStudents(int numStudents) {
-        return IntStream.range(0, numStudents).mapToObj(num -> createStudent(null)).collect(Collectors.toSet());
+        return IntStream.range(0, numStudents).mapToObj(num -> createStudent(null, num)).collect(Collectors.toSet());
     }
 
 }

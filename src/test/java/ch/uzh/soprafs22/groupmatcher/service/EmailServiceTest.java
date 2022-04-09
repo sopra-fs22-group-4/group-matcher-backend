@@ -42,7 +42,7 @@ class EmailServiceTest {
     void sendEmailsScheduledForNowTest() {
         Matcher testMatcher = new Matcher();
         testMatcher.setId(1L);
-        testMatcher.setStudents(Set.of(TestingUtils.createStudent(11L)));
+        testMatcher.setStudents(Set.of(TestingUtils.createStudent(11L,0)));
         Email testEmail = new Email();
         testEmail.setId(2L);
         testEmail.setSendAt(ZonedDateTime.now());

@@ -13,11 +13,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class StudentRepositoryTest {
@@ -34,7 +35,9 @@ class StudentRepositoryTest {
     void setup() {
         testMatcher = new Matcher();
         testMatcher.setGroupSize(3);
-        testMatcher.setStudents(TestingUtils.createStudents(4));
+        Set<Student> testStudents = TestingUtils.createStudents(4);
+        testStudents.forEach(student -> student.setMatcher(testMatcher));
+        testMatcher.setStudents(testStudents);
         Question question = TestingUtils.createQuestion(null, 4);
         question.setMatcher(testMatcher);
         testMatcher.setQuestions(List.of(question));
@@ -88,5 +91,21 @@ class StudentRepositoryTest {
         });
         Set<Long> studentsIds = storedMatcher.getStudents().stream().map(Student::getId).collect(Collectors.toSet());
         assertEquals(1, studentRepository.countMostCommonAnswer(question.getId(), studentsIds));
+    }
+
+    @Test
+    void findByMatcherIdAndStudentsEmail_successful() {
+        Matcher storedMatcher = matcherRepository.save(testMatcher);
+        storedMatcher.getStudents().forEach(
+                student -> assertTrue(studentRepository.findByMatcherIdAndEmail(
+                        storedMatcher.getId(),student.getEmail()).isPresent()));
+    }
+
+    @Test
+    void findByMatcherIdAndStudentsEmail_failed() {
+        Matcher storedMatcher = matcherRepository.save(testMatcher);
+        Optional<Student> searchedStudent = studentRepository.findByMatcherIdAndEmail(
+                storedMatcher.getId(), "test@email.com");
+        assertTrue(searchedStudent.isEmpty());
     }
 }

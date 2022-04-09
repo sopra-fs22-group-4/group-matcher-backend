@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface StudentRepository extends JpaRepository<Student, Long> {
@@ -21,6 +22,8 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     Integer countMostCommonAnswer(@Param("questionId") Long questionId, @Param("studentsIds") Set<Long> studentsIds);
 
     List<Student> findByIdIn(Set<Long> studentsIds);
+
+    Optional<Student> findByMatcherIdAndEmail(Long matcherId, String email);
 
     boolean existsByIdInAndTeamIsNotNull(Set<Long> studentsIds);
 
