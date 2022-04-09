@@ -48,7 +48,7 @@ class StudentServiceTest {
     void checkStudentEmail_valid() {
         Long matcherId = testMatcher.getId();
         Student expStudent = testStudents.get(0);
-        given(studentRepository.findByMatcher_IdAndEmail(any(Long.class),any(String.class)))
+        given(studentRepository.findByMatcherIdAndEmail(any(Long.class),any(String.class)))
                 .willReturn(Optional.of(expStudent));
         Student validStudent = studentService.checkValidEmail(matcherId,expStudent.getEmail());
         assertEquals(expStudent.getEmail(),validStudent.getEmail());
@@ -57,7 +57,7 @@ class StudentServiceTest {
     @Test
     void checkStudentEmail_invalid() {
         Long matcherId = testMatcher.getId();
-        given(studentRepository.findByMatcher_IdAndEmail(any(Long.class),any(String.class)))
+        given(studentRepository.findByMatcherIdAndEmail(any(Long.class),any(String.class)))
                 .willReturn(Optional.empty());
         assertThrows(ResponseStatusException.class,
                 ()->studentService.checkValidEmail(matcherId,"test@email.com"));

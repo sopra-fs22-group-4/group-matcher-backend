@@ -26,7 +26,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
     List<Student> findByIdIn(Set<Long> studentsIds);
 
-    Optional<Student> findByMatcher_IdAndEmail(Long matcherId, String email);
+    Optional<Student> findByMatcherIdAndEmail(Long matcherId, String email);
 
     boolean existsByIdInAndTeamIsNotNull(Set<Long> studentsIds);
 

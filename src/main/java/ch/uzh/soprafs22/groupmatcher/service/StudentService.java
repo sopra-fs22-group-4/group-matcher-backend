@@ -16,7 +16,7 @@ public class StudentService {
     private StudentRepository studentRepository;
 
     public Student checkValidEmail(Long matcherId, String studentEmail){
-        return studentRepository.findByMatcher_IdAndEmail(matcherId,studentEmail)
+        return studentRepository.findByMatcherIdAndEmail(matcherId,studentEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Invalid email address, please check your email address"));
     }
