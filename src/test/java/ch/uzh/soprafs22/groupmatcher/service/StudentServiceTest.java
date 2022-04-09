@@ -31,27 +31,24 @@ class StudentServiceTest {
 
     private final List<Student> testStudents = new ArrayList<>();
     private Matcher testMatcher;
+    private Student testStudent;
 
 
     @BeforeEach
     public void setup() {
         testMatcher = new Matcher();
         testMatcher.setId(10L);
-        for(int i=0; i<3; i++){
-            Student testStudent = TestingUtils.createStudent((long) i+10,i);
-            testStudent.setMatcher(testMatcher);
-            testStudents.add(testStudent);
-        }
+        testStudent = TestingUtils.createStudent(null,0);
+        testStudent.setMatcher(testMatcher);
     }
 
     @Test
     void checkStudentEmail_valid() {
         Long matcherId = testMatcher.getId();
-        Student expStudent = testStudents.get(0);
         given(studentRepository.findByMatcherIdAndEmail(any(Long.class),any(String.class)))
-                .willReturn(Optional.of(expStudent));
-        Student validStudent = studentService.checkValidEmail(matcherId,expStudent.getEmail());
-        assertEquals(expStudent.getEmail(),validStudent.getEmail());
+                .willReturn(Optional.of(testStudent));
+        Student validStudent = studentService.checkValidEmail(matcherId,testStudent.getEmail());
+        assertEquals(testStudent.getEmail(),validStudent.getEmail());
     }
 
     @Test

@@ -15,9 +15,6 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
             "AND size(student.answers) = size(student.matcher.questions) AND student.team IS NULL")
     Set<Long> getStudentsWithoutTeam(@Param("matcherId") Long matcherId);
 
-    @Query("SELECT student.id FROM Student student WHERE student.matcher.id = :matcherId ")
-    Set<Long> getStudentsByMatcherId(@Param("matcherId") Long matcherId);
-
     @Query(value = "SELECT max(team_answers.frequency) FROM " +
             "(SELECT count(student_answer.answers_id) AS frequency FROM student_answers student_answer " +
             "WHERE student_answer.answers_id IN (SELECT answer.id FROM answer answer WHERE answer.question_id = :questionId) " +

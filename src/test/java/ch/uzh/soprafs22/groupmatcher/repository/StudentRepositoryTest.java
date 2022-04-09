@@ -96,15 +96,16 @@ class StudentRepositoryTest {
     @Test
     void findByMatcherIdAndStudentsEmail_successful() {
         Matcher storedMatcher = matcherRepository.save(testMatcher);
-        Student expStudent = storedMatcher.getStudents().iterator().next();
-        Optional<Student> searchedStudent = studentRepository.findByMatcherIdAndEmail(storedMatcher.getId(), expStudent.getEmail());
-        assertTrue(searchedStudent.isPresent());
+        storedMatcher.getStudents().forEach(
+                student -> assertTrue(studentRepository.findByMatcherIdAndEmail(
+                        storedMatcher.getId(),student.getEmail()).isPresent()));
     }
 
     @Test
     void findByMatcherIdAndStudentsEmail_failed() {
         Matcher storedMatcher = matcherRepository.save(testMatcher);
-        Optional<Student> searchedStudent = studentRepository.findByMatcherIdAndEmail(storedMatcher.getId(), "test@email.com");
+        Optional<Student> searchedStudent = studentRepository.findByMatcherIdAndEmail(
+                storedMatcher.getId(), "test@email.com");
         assertTrue(searchedStudent.isEmpty());
     }
 }
