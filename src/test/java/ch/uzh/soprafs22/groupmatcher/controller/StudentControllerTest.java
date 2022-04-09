@@ -1,12 +1,9 @@
 package ch.uzh.soprafs22.groupmatcher.controller;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
-import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
-import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
 import ch.uzh.soprafs22.groupmatcher.service.StudentService;
-import com.google.gson.Gson;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +27,6 @@ class StudentControllerTest {
     @MockBean
     private StudentService studentService;
 
-    private UserDTO testUserDTO;
     private Student testStudent;
     private Matcher testMatcher;
 
@@ -38,19 +34,16 @@ class StudentControllerTest {
     public void setup() {
         testMatcher = new Matcher();
         testMatcher.setId(1L);
-        testStudent = TestingUtils.createStudent(null);
-
-        testUserDTO = new UserDTO();
-        testUserDTO.setEmail(testStudent.getEmail());
+        testStudent = TestingUtils.createStudent(null, null);
     }
 
     @SneakyThrows
     @Test
     void checkValidStudent(){
-        given(studentService.checkValidEmail(any(Long.class),any(UserDTO.class))).willReturn(testStudent);
-        mockMvc.perform(get("/question/{matcherId}/student",testMatcher.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(new Gson().toJson(testUserDTO)))
+        given(studentService.checkValidEmail(any(Long.class),any(String.class))).willReturn(testStudent);
+        mockMvc.perform(get("/question/{matcherId}/{studentEmail}}",
+                        testMatcher.getId(), testStudent.getEmail())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
 }
