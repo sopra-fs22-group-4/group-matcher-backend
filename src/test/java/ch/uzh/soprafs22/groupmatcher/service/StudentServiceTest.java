@@ -1,8 +1,11 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
+import ch.uzh.soprafs22.groupmatcher.dto.AnswerDTO;
+import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
+import ch.uzh.soprafs22.groupmatcher.repository.AnswerRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,8 +14,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,16 +29,20 @@ class StudentServiceTest {
 
     @MockBean
     private StudentRepository studentRepository;
+    @MockBean
+    private AnswerRepository answerRepository;
 
-    private final List<Student> testStudents = new ArrayList<>();
     private Matcher testMatcher;
     private Student testStudent;
+    private Answer testAnswer;
 
 
     @BeforeEach
     public void setup() {
         testMatcher = new Matcher();
         testMatcher.setId(10L);
+        testAnswer = new Answer();
+        testAnswer.setOrdinalNum(0);
         testStudent = TestingUtils.createStudent(null,0);
         testStudent.setMatcher(testMatcher);
     }
@@ -58,5 +63,37 @@ class StudentServiceTest {
                 .willReturn(Optional.empty());
         assertThrows(ResponseStatusException.class,
                 ()->studentService.checkValidEmail(matcherId,"test@email.com"));
+    }
+
+    @Test
+    void updateAnswer_valid(){
+        Long studentId  = testStudent.getId();
+        Long questionId = 1L;
+        AnswerDTO answerDTO = new AnswerDTO();
+
+        given(studentRepository.getById(studentId)).willReturn(testStudent);
+        given(answerRepository.findByQuestionIdAndOrdinalNum(questionId,answerDTO.getOrdinalNum()))
+                .willReturn(Optional.ofNullable(testAnswer));
+
+        assertEquals(0, testAnswer.getStudents().size());
+        assertEquals(0, testStudent.getAnswers().size());
+        studentService.updateAnswer(studentId,questionId,answerDTO);
+        assertEquals(1, testAnswer.getStudents().size());
+        assertEquals(1, testStudent.getAnswers().size());
+        assertEquals(testStudent, testAnswer.getStudents().iterator().next());
+        assertEquals(testAnswer, testStudent.getAnswers().iterator().next());
+    }
+
+    @Test
+    void updateAnswer_invalid(){
+        Long studentId  = testStudent.getId();
+        Long questionId = 1L;
+        AnswerDTO answerDTO = new AnswerDTO();
+
+        given(studentRepository.getById(studentId)).willReturn(testStudent);
+        given(answerRepository.findByQuestionIdAndOrdinalNum(questionId, answerDTO.getOrdinalNum()))
+                .willReturn(Optional.empty());
+
+        assertThrows(ResponseStatusException.class,()->studentService.updateAnswer(studentId,questionId,answerDTO));
     }
 }

@@ -19,9 +19,10 @@ public class TestingUtils {
         return student;
     }
 
-    public static Answer createAnswer(Question question) {
+    public static Answer createAnswer(Question question, Integer ordinalNum) {
         Answer answer = new Answer();
         answer.setQuestion(question);
+        answer.setOrdinalNum(ordinalNum);
         return answer;
     }
 
@@ -30,7 +31,7 @@ public class TestingUtils {
         question.setId(questionId);
         question.setQuestionCategory(QuestionCategory.KNOWLEDGE);
         question.setQuestionType(QuestionType.SINGLE_CHOICE);
-        question.setAnswers(IntStream.range(0, numAnswers).mapToObj(num -> createAnswer(question)).toList());
+        question.setAnswers(IntStream.range(0, numAnswers).mapToObj(num -> createAnswer(question,num)).toList());
         return question;
     }
 
