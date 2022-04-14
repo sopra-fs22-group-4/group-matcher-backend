@@ -31,7 +31,7 @@ public class TestingUtils {
         question.setId(questionId);
         question.setQuestionCategory(QuestionCategory.KNOWLEDGE);
         question.setQuestionType(QuestionType.SINGLE_CHOICE);
-        question.setAnswers(IntStream.range(0, numAnswers).mapToObj(num -> createAnswer(question,num)).toList());
+        question.setAnswers(IntStream.range(0, numAnswers).mapToObj(num -> createAnswer(question, num)).toList());
         return question;
     }
 

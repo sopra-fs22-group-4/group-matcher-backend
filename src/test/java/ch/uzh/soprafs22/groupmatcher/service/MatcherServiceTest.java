@@ -6,17 +6,21 @@ import ch.uzh.soprafs22.groupmatcher.constant.QuestionCategory;
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.QuestionDTO;
+import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Question;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
+import ch.uzh.soprafs22.groupmatcher.repository.AnswerRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.TeamRepository;
 import org.apache.commons.math3.util.CombinatoricsUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,6 +42,8 @@ class MatcherServiceTest {
 
     @MockBean
     private StudentRepository studentRepository;
+    @MockBean
+    private AnswerRepository answerRepository;
 
     @MockBean
     private TeamRepository teamRepository;
@@ -45,12 +51,26 @@ class MatcherServiceTest {
     @Autowired
     private MatcherService matcherService;
 
+    private Matcher testMatcher;
+    private Student testStudent;
+
+    @BeforeEach
+    public void setup() {
+        testMatcher = new Matcher();
+        testMatcher.setId(1L);
+        Question testQuestion = TestingUtils.createQuestion(2L, 1);
+        testMatcher.setQuestions(List.of(testQuestion));
+        testStudent = TestingUtils.createStudent(null, 0);
+        testStudent.setMatcher(testMatcher);
+        given(matcherRepository.save(any(Matcher.class))).willAnswer(returnsFirstArg());
+        given(studentRepository.save(any(Student.class))).willAnswer(returnsFirstArg());
+    }
+
     @Test
     void createMatcher_successful() {
         MatcherDTO testMatcherDTO = new MatcherDTO();
         testMatcherDTO.setName("Test Matcher");
         testMatcherDTO.setGroupSize(5);
-        given(matcherRepository.save(any(Matcher.class))).willAnswer(returnsFirstArg());
         Matcher createdMatcher = matcherService.createMatcher(testMatcherDTO);
         verify(matcherRepository, times(1)).save(any());
         assertEquals(testMatcherDTO.getName(), createdMatcher.getName());
@@ -69,7 +89,6 @@ class MatcherServiceTest {
         testQuestionDTO.setQuestionType(QuestionType.SINGLE_CHOICE);
         testQuestionDTO.setQuestionCategory(QuestionCategory.KNOWLEDGE);
         testMatcherDTO.setQuestions(List.of(testQuestionDTO));
-        given(matcherRepository.save(any(Matcher.class))).willAnswer(returnsFirstArg());
         Matcher createdMatcher = matcherService.createMatcher(testMatcherDTO);
         assertEquals(1, createdMatcher.getQuestions().size());
         assertEquals(testQuestionDTO.getOrdinalNum(), createdMatcher.getQuestions().get(0).getOrdinalNum());
@@ -159,5 +178,38 @@ class MatcherServiceTest {
         Double maxSimilarityScore = testMatcher.getQuestions().stream().mapToDouble(question -> question.getAnswers().size()).sum();
         assertEquals(maxSimilarityScore, student1.getTeam().getSimilarityScore());
         assertTrue(student7.getTeam().getSimilarityScore() < maxSimilarityScore);
+    }
+
+    @Test
+    void checkStudentEmail_valid() {
+        given(studentRepository.findByMatcherIdAndEmail(testMatcher.getId(), testStudent.getEmail())).willReturn(Optional.of(testStudent));
+        Student storedStudent = matcherService.checkValidEmail(testMatcher.getId(), testStudent.getEmail());
+        assertEquals(testStudent, storedStudent);
+    }
+
+    @Test
+    void checkStudentEmail_invalid() {
+        Long matcherId = testMatcher.getId();
+        given(studentRepository.findByMatcherIdAndEmail(matcherId, testStudent.getEmail())).willReturn(Optional.empty());
+        assertThrows(ResponseStatusException.class, () -> matcherService.checkValidEmail(matcherId, "test@email.com"));
+    }
+
+    @Test
+    void submitStudentAnswers_valid(){
+        Answer testAnswer = testMatcher.getQuestions().get(0).getAnswers().get(0);
+        testAnswer.setId(3L);
+        given(answerRepository.findByIdAndQuestion_Matcher_Id(testAnswer.getId(), testMatcher.getId())).willReturn(Optional.of(testAnswer));
+        assertTrue(testStudent.getAnswers().isEmpty());
+        Student storedStudent = matcherService.submitStudentAnswers(testStudent, List.of(testAnswer.getId()));
+        assertEquals(Set.of(testAnswer), storedStudent.getAnswers());
+    }
+
+    @Test
+    void submitStudentAnswers_invalid(){
+        Answer testAnswer = testMatcher.getQuestions().get(0).getAnswers().get(0);
+        testAnswer.setId(3L);
+        List<Long> answerIds = List.of(testAnswer.getId());
+        given(answerRepository.findByIdAndQuestion_Matcher_Id(testAnswer.getId(), testMatcher.getId())).willReturn(Optional.empty());
+        assertThrows(ResponseStatusException.class,() -> matcherService.submitStudentAnswers(testStudent, answerIds));
     }
 }

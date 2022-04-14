@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface AnswerRepository extends JpaRepository<Answer, Long> {
 
     Optional<Answer> findByQuestionIdAndOrdinalNum(Long questionId, Integer ordinalNum);
+
+    Optional<Answer> findByIdAndQuestion_Matcher_Id(Long questionId, Long matcherId);
 }
