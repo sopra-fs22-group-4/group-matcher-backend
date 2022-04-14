@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -27,16 +28,18 @@ public class StudentService {
                         "Invalid email address, please check your email address"));
     }
 
-    public void updateAnswer(Long studentId, Long questionId, AnswerDTO answerDTO){
+    public void updateAnswer(Long studentId, Long questionId, List<AnswerDTO> answerDTOs){
 
         Student student = studentRepository.getById(studentId);
-        Optional<Answer> answer = answerRepository.findByQuestionIdAndOrdinalNum(questionId, answerDTO.getOrdinalNum());
+        for (AnswerDTO answerDTO:answerDTOs){
+            Optional<Answer> answer = answerRepository.findByQuestionIdAndOrdinalNum(questionId, answerDTO.getOrdinalNum());
 
-        if (answer.isPresent()){
-            student.getAnswers().add(answer.get());
-            answer.get().getStudents().add(student);
-        }else{
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Requested answer is invalid.");
+            if (answer.isPresent()){
+                student.getAnswers().add(answer.get());
+                answer.get().getStudents().add(student);
+            }else{
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Requested answer is invalid.");
+            }
         }
     }
 }

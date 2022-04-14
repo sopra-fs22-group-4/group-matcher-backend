@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -69,15 +70,15 @@ class StudentServiceTest {
     void updateAnswer_valid(){
         Long studentId  = testStudent.getId();
         Long questionId = 1L;
-        AnswerDTO answerDTO = new AnswerDTO();
+        List<AnswerDTO> answerDTOs = List.of(new AnswerDTO());
 
         given(studentRepository.getById(studentId)).willReturn(testStudent);
-        given(answerRepository.findByQuestionIdAndOrdinalNum(questionId,answerDTO.getOrdinalNum()))
+        given(answerRepository.findByQuestionIdAndOrdinalNum(questionId,answerDTOs.get(0).getOrdinalNum()))
                 .willReturn(Optional.ofNullable(testAnswer));
 
         assertEquals(0, testAnswer.getStudents().size());
         assertEquals(0, testStudent.getAnswers().size());
-        studentService.updateAnswer(studentId,questionId,answerDTO);
+        studentService.updateAnswer(studentId,questionId,answerDTOs);
         assertEquals(1, testAnswer.getStudents().size());
         assertEquals(1, testStudent.getAnswers().size());
         assertEquals(testStudent, testAnswer.getStudents().iterator().next());
@@ -88,12 +89,12 @@ class StudentServiceTest {
     void updateAnswer_invalid(){
         Long studentId  = testStudent.getId();
         Long questionId = 1L;
-        AnswerDTO answerDTO = new AnswerDTO();
+        List<AnswerDTO> answerDTOs = List.of(new AnswerDTO());
 
         given(studentRepository.getById(studentId)).willReturn(testStudent);
-        given(answerRepository.findByQuestionIdAndOrdinalNum(questionId, answerDTO.getOrdinalNum()))
+        given(answerRepository.findByQuestionIdAndOrdinalNum(questionId, answerDTOs.get(0).getOrdinalNum()))
                 .willReturn(Optional.empty());
 
-        assertThrows(ResponseStatusException.class,()->studentService.updateAnswer(studentId,questionId,answerDTO));
+        assertThrows(ResponseStatusException.class,()->studentService.updateAnswer(studentId,questionId,answerDTOs));
     }
 }
