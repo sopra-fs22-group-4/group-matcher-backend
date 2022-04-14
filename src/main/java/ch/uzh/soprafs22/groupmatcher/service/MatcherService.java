@@ -1,10 +1,8 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
-import ch.uzh.soprafs22.groupmatcher.model.Matcher;
-import ch.uzh.soprafs22.groupmatcher.model.Question;
-import ch.uzh.soprafs22.groupmatcher.model.Student;
-import ch.uzh.soprafs22.groupmatcher.model.Team;
+import ch.uzh.soprafs22.groupmatcher.model.*;
+import ch.uzh.soprafs22.groupmatcher.repository.AnswerRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.TeamRepository;
@@ -20,6 +18,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @AllArgsConstructor
@@ -30,11 +29,26 @@ public class MatcherService {
 
     private StudentRepository studentRepository;
 
+    private AnswerRepository answerRepository;
+
     private TeamRepository teamRepository;
 
     public Matcher createMatcher(MatcherDTO matcherDTO) {
         Matcher newMatcher = new ModelMapper().map(matcherDTO, Matcher.class);
         return matcherRepository.save(newMatcher);
+    }
+
+    public Student checkValidEmail(Long matcherId, String studentEmail) {
+        return studentRepository.findByMatcherIdAndEmail(matcherId, studentEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid email address"));
+    }
+
+    public Student submitStudentAnswers(Student student, List<Long> answerIds) {
+        Set<Answer> quizAnswers = answerIds.stream().map(answerId -> // Verify the answer belongs to the student's matcher
+                answerRepository.findByIdAndQuestion_Matcher_Id(answerId, student.getMatcher().getId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid answer ID"))).collect(Collectors.toSet());
+        student.setAnswers(quizAnswers);
+        return studentRepository.save(student);
     }
 
     private Map.Entry<Set<Long>, Double> createTeamEntry(Set<Long> teamIds, List<Question> questions) {
