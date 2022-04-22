@@ -1,5 +1,8 @@
 package ch.uzh.soprafs22.groupmatcher.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,6 +13,7 @@ import java.util.Set;
 @Getter
 @Setter
 @Entity
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Admin {
     @Id
     @GeneratedValue
@@ -18,6 +22,7 @@ public class Admin {
     @Column(nullable = false)
     private String email;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 
@@ -26,6 +31,7 @@ public class Admin {
     @Column(nullable = false)
     private boolean verified = false;
 
+    @JsonIgnore
     @ManyToMany(mappedBy = "admins",cascade = CascadeType.ALL)
     private Set<Matcher> matchers  = new LinkedHashSet<>();
 }

@@ -1,11 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
-import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
-import ch.uzh.soprafs22.groupmatcher.constant.QuestionCategory;
-import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
-import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
-import ch.uzh.soprafs22.groupmatcher.dto.QuestionDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Question;
@@ -64,38 +59,6 @@ class MatcherServiceTest {
         testStudent.setMatcher(testMatcher);
         given(matcherRepository.save(any(Matcher.class))).willAnswer(returnsFirstArg());
         given(studentRepository.save(any(Student.class))).willAnswer(returnsFirstArg());
-    }
-
-    @Test
-    void createMatcher_successful() {
-        MatcherDTO testMatcherDTO = new MatcherDTO();
-        testMatcherDTO.setName("Test Matcher");
-        testMatcherDTO.setGroupSize(5);
-        Matcher createdMatcher = matcherService.createMatcher(testMatcherDTO);
-        verify(matcherRepository, times(1)).save(any());
-        assertEquals(testMatcherDTO.getName(), createdMatcher.getName());
-        assertEquals(testMatcherDTO.getGroupSize(), createdMatcher.getGroupSize());
-        assertEquals(MatchingStrategy.MOST_SIMILAR, createdMatcher.getMatchingStrategy());
-    }
-
-    @Test
-    void createMatcherWithQuestion_successful() {
-        MatcherDTO testMatcherDTO = new MatcherDTO();
-        testMatcherDTO.setName("Test Matcher");
-        testMatcherDTO.setGroupSize(5);
-        QuestionDTO testQuestionDTO = new QuestionDTO();
-        testQuestionDTO.setOrdinalNum(1);
-        testQuestionDTO.setContent("Q1");
-        testQuestionDTO.setQuestionType(QuestionType.SINGLE_CHOICE);
-        testQuestionDTO.setQuestionCategory(QuestionCategory.KNOWLEDGE);
-        testMatcherDTO.setQuestions(List.of(testQuestionDTO));
-        Matcher createdMatcher = matcherService.createMatcher(testMatcherDTO);
-        assertEquals(1, createdMatcher.getQuestions().size());
-        assertEquals(testQuestionDTO.getOrdinalNum(), createdMatcher.getQuestions().get(0).getOrdinalNum());
-        assertEquals(testQuestionDTO.getContent(), createdMatcher.getQuestions().get(0).getContent());
-        assertEquals(testQuestionDTO.getQuestionType(), createdMatcher.getQuestions().get(0).getQuestionType());
-        assertEquals(testQuestionDTO.getQuestionCategory(), createdMatcher.getQuestions().get(0).getQuestionCategory());
-        assertTrue(createdMatcher.getQuestions().get(0).getAnswers().isEmpty());
     }
 
     @Test
@@ -183,7 +146,7 @@ class MatcherServiceTest {
     @Test
     void checkStudentEmail_valid() {
         given(studentRepository.findByMatcherIdAndEmail(testMatcher.getId(), testStudent.getEmail())).willReturn(Optional.of(testStudent));
-        Student storedStudent = matcherService.checkValidEmail(testMatcher.getId(), testStudent.getEmail());
+        Student storedStudent = matcherService.verifyStudentEmail(testMatcher.getId(), testStudent.getEmail());
         assertEquals(testStudent, storedStudent);
     }
 
@@ -191,7 +154,7 @@ class MatcherServiceTest {
     void checkStudentEmail_invalid() {
         Long matcherId = testMatcher.getId();
         given(studentRepository.findByMatcherIdAndEmail(matcherId, testStudent.getEmail())).willReturn(Optional.empty());
-        assertThrows(ResponseStatusException.class, () -> matcherService.checkValidEmail(matcherId, "test@email.com"));
+        assertThrows(ResponseStatusException.class, () -> matcherService.verifyStudentEmail(matcherId, "test@email.com"));
     }
 
     @Test
