@@ -1,6 +1,5 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
-import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
 import ch.uzh.soprafs22.groupmatcher.model.*;
 import ch.uzh.soprafs22.groupmatcher.repository.AnswerRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
@@ -9,7 +8,6 @@ import ch.uzh.soprafs22.groupmatcher.repository.TeamRepository;
 import com.google.common.collect.Sets;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -33,12 +31,7 @@ public class MatcherService {
 
     private TeamRepository teamRepository;
 
-    public Matcher createMatcher(MatcherDTO matcherDTO) {
-        Matcher newMatcher = new ModelMapper().map(matcherDTO, Matcher.class);
-        return matcherRepository.save(newMatcher);
-    }
-
-    public Student checkValidEmail(Long matcherId, String studentEmail) {
+    public Student verifyStudentEmail(Long matcherId, String studentEmail) {
         return studentRepository.findByMatcherIdAndEmail(matcherId, studentEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid email address"));
     }

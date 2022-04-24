@@ -1,8 +1,13 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
+import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
+import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
+import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.repository.AdminRepository;
+import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
+import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +28,12 @@ class AdminServiceTest {
     @MockBean
     private AdminRepository adminRepository;
 
+    @MockBean
+    private MatcherRepository matcherRepository;
+
+    @MockBean
+    private StudentRepository studentRepository;
+
     @Autowired
     private AdminService adminService;
 
@@ -40,6 +51,7 @@ class AdminServiceTest {
         testAdmin.setEmail(testUserDTO.getEmail());
         testAdmin.setPassword(testUserDTO.getPassword());
         given(adminRepository.save(any(Admin.class))).willAnswer(returnsFirstArg());
+        given(matcherRepository.save(any(Matcher.class))).willAnswer(returnsFirstArg());
     }
 
     @Test
@@ -59,8 +71,8 @@ class AdminServiceTest {
     @Test
     void checkValidLogin_successful() {
         testAdmin.setVerified(true);
-        given(adminRepository.findByEmail(testUserDTO.getEmail())).willReturn(Optional.of(testAdmin));
-        Admin returnedAdmin = adminService.checkValidLogin(testUserDTO);
+        given(adminRepository.findByEmailAndPassword(testUserDTO.getEmail(), testUserDTO.getPassword())).willReturn(Optional.of(testAdmin));
+        Admin returnedAdmin = adminService.validateLogin(testUserDTO);
         assertEquals(testAdmin.getId(), returnedAdmin.getId());
         assertEquals(testAdmin.getPassword(), returnedAdmin.getPassword());
         assertEquals(testAdmin.getEmail(), returnedAdmin.getEmail());
@@ -71,13 +83,13 @@ class AdminServiceTest {
     void checkValidLogin_notVerified_throwsException() {
         assertFalse(testAdmin.isVerified());
         given(adminRepository.findByEmail(testUserDTO.getEmail())).willReturn(Optional.of(testAdmin));
-        assertThrows(ResponseStatusException.class, () -> adminService.checkValidLogin(testUserDTO));
+        assertThrows(ResponseStatusException.class, () -> adminService.validateLogin(testUserDTO));
     }
 
     @Test
     void checkValidLogin_notRegistered_throwsException() {
         given(adminRepository.findByEmail(testUserDTO.getEmail())).willReturn(Optional.empty());
-        assertThrows(ResponseStatusException.class, () -> adminService.checkValidLogin(testUserDTO));
+        assertThrows(ResponseStatusException.class, () -> adminService.validateLogin(testUserDTO));
     }
 
     @Test
@@ -85,7 +97,7 @@ class AdminServiceTest {
         testAdmin.setVerified(true);
         testAdmin.setPassword("wrongPassword");
         given(adminRepository.findByEmail(testUserDTO.getEmail())).willReturn(Optional.of(testAdmin));
-        assertThrows(ResponseStatusException.class, () -> adminService.checkValidLogin(testUserDTO));
+        assertThrows(ResponseStatusException.class, () -> adminService.validateLogin(testUserDTO));
     }
 
     @Test
@@ -100,5 +112,16 @@ class AdminServiceTest {
     void verifyAccount_notRegistered_throwsException() {
         given(adminRepository.findById(testAdmin.getId())).willReturn(Optional.empty());
         assertThrows(ResponseStatusException.class, () -> adminService.verifyAccount(1L));
+    }
+
+    @Test
+    void createMatcher_successful() {
+        MatcherDTO testMatcherDTO = new MatcherDTO();
+        testMatcherDTO.setGroupSize(5);
+        given(adminRepository.findById(testAdmin.getId())).willReturn(Optional.of(testAdmin));
+        Matcher createdMatcher = adminService.createMatcher(testAdmin.getId(), testMatcherDTO);
+        verify(matcherRepository, times(1)).save(any());
+        assertEquals(testMatcherDTO.getGroupSize(), createdMatcher.getGroupSize());
+        assertEquals(MatchingStrategy.MOST_SIMILAR, createdMatcher.getMatchingStrategy());
     }
 }

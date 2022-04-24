@@ -62,7 +62,7 @@ class AdminControllerTest {
     @Test
     void loginAdmin_successful() throws Exception {
         testAdmin.setVerified(true);
-        given(adminService.checkValidLogin(any(UserDTO.class))).willReturn(testAdmin);
+        given(adminService.validateLogin(any(UserDTO.class))).willReturn(testAdmin);
         mockMvc.perform(post("/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(new Gson().toJson(testUserDTO)))
