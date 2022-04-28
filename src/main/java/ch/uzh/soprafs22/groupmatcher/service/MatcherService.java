@@ -44,6 +44,12 @@ public class MatcherService {
         return studentRepository.save(student);
     }
 
+    public void addNewStudents(Long matcherId, Set<Student> students) {
+        Matcher storedMatcher = matcherRepository.findById(matcherId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No account found for the given ID"));
+        storedMatcher.setStudents(students);
+    }
+
     private Map.Entry<Set<Long>, Double> createTeamEntry(Set<Long> teamIds, List<Question> questions) {
         return Map.entry(teamIds, questions.stream().map(question ->
                 question.calculateSimilarity(studentRepository.countMostCommonAnswer(question.getId(), teamIds)))
