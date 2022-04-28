@@ -1,6 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.model.*;
+import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import ch.uzh.soprafs22.groupmatcher.repository.AnswerRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
@@ -8,6 +9,7 @@ import ch.uzh.soprafs22.groupmatcher.repository.TeamRepository;
 import com.google.common.collect.Sets;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -17,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static java.time.ZonedDateTime.now;
 
 @Slf4j
 @AllArgsConstructor
@@ -41,6 +45,7 @@ public class MatcherService {
                 answerRepository.findByIdAndQuestion_Matcher_Id(answerId, student.getMatcher().getId())
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid answer ID"))).collect(Collectors.toSet());
         student.setAnswers(quizAnswers);
+        student.setSubmissionTimestamp(now());
         return studentRepository.save(student);
     }
 
@@ -48,6 +53,12 @@ public class MatcherService {
         Matcher storedMatcher = matcherRepository.findById(matcherId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No account found for the given ID"));
         storedMatcher.setStudents(students);
+        matcherRepository.save(storedMatcher);
+    }
+
+    public List<Submission> getLatestSubmissionsByMatcherId(Long matcherId) {
+        return studentRepository.findByMatcher_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(
+                matcherId, Pageable.ofSize(10));
     }
 
     private Map.Entry<Set<Long>, Double> createTeamEntry(Set<Long> teamIds, List<Question> questions) {

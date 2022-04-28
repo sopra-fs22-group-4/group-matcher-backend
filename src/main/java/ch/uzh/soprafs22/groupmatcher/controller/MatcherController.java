@@ -1,6 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.controller;
 
 import ch.uzh.soprafs22.groupmatcher.model.Student;
+import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import ch.uzh.soprafs22.groupmatcher.service.MatcherService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,11 @@ public class MatcherController {
     @GetMapping("/{matcherId}/students/{studentEmail}")
     public Student verifyStudentEmail(@PathVariable Long matcherId, @PathVariable String studentEmail) {
         return matcherService.verifyStudentEmail(matcherId, studentEmail);
+    }
+
+    @GetMapping("/{matcherId}/submissions/latest")
+    public List<Submission> getLatestSubmissions(@PathVariable Long matcherId) {
+        return matcherService.getLatestSubmissionsByMatcherId(matcherId);
     }
 
     @PutMapping("/{matcherId}/students/{studentEmail}")

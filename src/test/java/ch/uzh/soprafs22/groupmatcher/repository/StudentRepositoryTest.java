@@ -156,4 +156,39 @@ class StudentRepositoryTest {
         });
     }
 
+    @Test
+    void findLatestSubmissionByMatcherId_empty() {
+        Matcher storedMatcher = matcherRepository.save(testMatcher);
+        storedMatcher.getStudents().forEach(student -> assertNull(student.getSubmissionTimestamp()));
+        assertTrue(studentRepository.findByMatcher_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(
+                storedMatcher.getId(), Pageable.ofSize(10)).isEmpty());
+    }
+
+    @Test
+    void findLatestSubmissionByMatcherId_successful() {
+
+        AtomicInteger counter = new AtomicInteger(1);
+
+        testMatcher.getStudents().forEach(student -> student.setSubmissionTimestamp(
+                ZonedDateTime.now().minus(counter.getAndIncrement(), ChronoUnit.HOURS)));
+
+        Matcher storedMatcher = matcherRepository.save(testMatcher);
+
+        List<Student> expectedStudents = storedMatcher.getStudents()
+                .stream().sorted(Comparator.comparing(Student::getSubmissionTimestamp).reversed()).toList();
+
+        List<Submission> testSubmissions = studentRepository.findByMatcher_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(
+                storedMatcher.getId(), Pageable.ofSize(10));
+
+        assertEquals(expectedStudents.size(), testSubmissions.size());
+        IntStream.range(0, expectedStudents.size()).forEach(index -> {
+            Student expectedStudent = expectedStudents.get(index);
+            Submission testSubmission = testSubmissions.get(index);
+            assertEquals(expectedStudent.getEmail(), testSubmission.getEmail());
+            assertEquals(expectedStudent.getMatcher().getCourseName(), testSubmission.getCourseName());
+            assertEquals(expectedStudent.getSubmissionTimestamp().truncatedTo(ChronoUnit.MINUTES),
+                    testSubmission.getSubmissionTimestamp().truncatedTo(ChronoUnit.MINUTES));
+        });
+    }
+
 }
