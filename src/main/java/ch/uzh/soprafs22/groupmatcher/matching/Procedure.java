@@ -32,7 +32,7 @@ public class Procedure {
                 { 0,4,0,0, 0,0,0,0,0,6 },
                 { 0,4,0,0, 0,0,0,0,0,6 },
                 { 4,0,0,0, 0,0,0,0,0,6 } };
-        
+
         String[] studentsNames = new String[]{"student1", "student2", "student3", "student4", "student5", "student6", "student7"};
         DatabaseConnection databaseConnection = new ArrayAdapterDatabaseConnection(answersMatrix, studentsNames);
         Database database = new StaticArrayDatabase(databaseConnection, null);
