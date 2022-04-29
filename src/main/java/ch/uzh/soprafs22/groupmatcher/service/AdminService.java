@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.ZonedDateTime;
+
 @Slf4j
 @AllArgsConstructor
 @Service
@@ -40,4 +42,5 @@ public class AdminService {
         storedUser.setVerified(true);
         return adminRepository.save(storedUser);
     }
+
 }
