@@ -13,7 +13,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -40,7 +39,7 @@ class MatcherControllerTest {
     @SneakyThrows
     @Test
     void checkValidStudent(){
-        given(matcherService.verifyStudentEmail(any(Long.class),any(String.class))).willReturn(TestingUtils.convertToOverview(testStudent));
+        given(matcherService.verifyStudentEmail(testMatcher.getId(), testStudent.getEmail())).willReturn(TestingUtils.convertToOverview(testStudent));
         mockMvc.perform(get("/matchers/{matcherId}/students/{studentEmail}}",
                         testMatcher.getId(), testStudent.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))

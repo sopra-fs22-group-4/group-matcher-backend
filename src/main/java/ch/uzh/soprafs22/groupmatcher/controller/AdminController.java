@@ -26,7 +26,7 @@ public class AdminController {
     @ResponseStatus(HttpStatus.CREATED)
     public void createAdmin(@RequestBody UserDTO newAdmin) {
         adminService.createAdmin(newAdmin);
-//        emailService.sendAccountVerificationEmail(newAdmin.getEmail());
+        emailService.sendAccountVerificationEmail(newAdmin.getEmail());
     }
 
     @PostMapping("/login")

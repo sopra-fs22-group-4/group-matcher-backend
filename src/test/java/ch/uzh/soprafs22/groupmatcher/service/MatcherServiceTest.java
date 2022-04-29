@@ -164,6 +164,7 @@ class MatcherServiceTest {
     void submitStudentAnswers_valid(){
         Answer testAnswer = testMatcher.getQuestions().get(0).getAnswers().get(0);
         testAnswer.setId(3L);
+        given(studentRepository.getByMatcherIdAndEmail(testMatcher.getId(), testStudent.getEmail())).willReturn(Optional.of(testStudent));
         given(answerRepository.findByIdAndQuestion_Matcher_Id(testAnswer.getId(), testMatcher.getId())).willReturn(Optional.of(testAnswer));
         assertTrue(testStudent.getAnswers().isEmpty());
         Student storedStudent = matcherService.submitStudentAnswers(testMatcher.getId(), testStudent.getEmail(), List.of(testAnswer.getId()));
