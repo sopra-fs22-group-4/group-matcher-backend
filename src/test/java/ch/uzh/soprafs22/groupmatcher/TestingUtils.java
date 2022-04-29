@@ -2,6 +2,7 @@ package ch.uzh.soprafs22.groupmatcher;
 
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionCategory;
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
+import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import ch.uzh.soprafs22.groupmatcher.model.Question;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
@@ -14,7 +15,16 @@ import java.util.stream.IntStream;
 
 public class TestingUtils {
 
-    private static SpelAwareProxyProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
+    private static final SpelAwareProxyProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
+
+    public static Admin createAdmin(Long adminId) {
+        Admin admin = new Admin();
+        admin.setId(adminId);
+        admin.setName("Test Admin");
+        admin.setEmail("test@email.com");
+        admin.setPassword("test");
+        return admin;
+    }
 
     public static Student createStudent(Long studentId, Integer emailNum) {
         Student student = new Student();

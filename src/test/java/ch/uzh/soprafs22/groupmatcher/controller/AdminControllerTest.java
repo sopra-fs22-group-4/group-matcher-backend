@@ -56,7 +56,7 @@ class AdminControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(new Gson().toJson(testUserDTO)))
                 .andExpect(status().isCreated());
-        verify(emailService, times(1)).sendAccountVerificationEmail(testUserDTO.getEmail());
+        verify(emailService, times(1)).sendAccountVerificationEmail(testAdmin);
     }
 
     @Test

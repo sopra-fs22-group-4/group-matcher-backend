@@ -4,6 +4,7 @@ import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
+import ch.uzh.soprafs22.groupmatcher.model.Student;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherAdminOverview;
 import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import ch.uzh.soprafs22.groupmatcher.repository.AdminRepository;
@@ -56,9 +57,9 @@ public class AdminService {
     }
 
     public Matcher createMatcher(Long adminId, MatcherDTO matcherDTO) {
-        Matcher newMatcher = new ModelMapper().map(matcherDTO, Matcher.class);
         Admin storedAdmin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No account found for the given ID"));
+        Matcher newMatcher = new ModelMapper().map(matcherDTO, Matcher.class);
         newMatcher.setAdmins(Set.of(storedAdmin));
         return matcherRepository.save(newMatcher);
     }
@@ -69,6 +70,19 @@ public class AdminService {
         if (storedMather.getAdmins().stream().noneMatch(admin -> admin.getId().equals(adminId)))
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Matcher information is available for admins only");
         return storedMather;
+    }
+
+    public Matcher addNewStudents(Long adminId, Long matcherId, List<String> studentEmails) {
+        Matcher storedMatcher = getMatcherById(adminId, matcherId);
+        studentEmails.stream()
+                .filter(studentEmail -> !studentRepository.existsByMatcherIdAndEmail(matcherId, studentEmail))
+                .forEach(studentEmail -> {
+                    Student newStudent = new Student();
+                    newStudent.setEmail(studentEmail);
+                    newStudent.setMatcher(storedMatcher);
+                    storedMatcher.getStudents().add(newStudent);
+                });
+        return matcherRepository.save(storedMatcher);
     }
 
     public List<MatcherAdminOverview> getMatchersByAdminId(Long adminId) {

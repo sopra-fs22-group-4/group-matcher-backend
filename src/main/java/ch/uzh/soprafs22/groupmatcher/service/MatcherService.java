@@ -36,6 +36,11 @@ public class MatcherService {
 
     private TeamRepository teamRepository;
 
+    public Student getStudent(Long matcherId, String studentEmail) {
+        return studentRepository.getByMatcherIdAndEmail(matcherId, studentEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid email address"));
+    }
+
     public MatcherOverview getMatcherOverview(Long matcherId) {
         return matcherRepository.findMatcherById(matcherId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -48,21 +53,13 @@ public class MatcherService {
     }
 
     public Student submitStudentAnswers(Long matcherId, String studentEmail, List<Long> answerIds) {
-        Student student = studentRepository.getByMatcherIdAndEmail(matcherId, studentEmail)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid email address"));
+        Student student = getStudent(matcherId, studentEmail);
         List<Answer> quizAnswers = answerIds.stream().map(answerId -> // Verify the answer belongs to the student's matcher
                 answerRepository.findByIdAndQuestion_Matcher_Id(answerId, matcherId)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid answer ID"))).toList();
         student.setAnswers(quizAnswers);
         student.setSubmissionTimestamp(now());
         return studentRepository.save(student);
-    }
-
-    public void addNewStudents(Long matcherId, Set<Student> students) {
-        Matcher storedMatcher = matcherRepository.findById(matcherId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No account found for the given ID"));
-        storedMatcher.getStudents().addAll(students);
-        matcherRepository.save(storedMatcher);
     }
 
     public List<Submission> getLatestSubmissionsByMatcherId(Long matcherId) {

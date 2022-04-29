@@ -24,9 +24,10 @@ public class AdminController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createAdmin(@RequestBody UserDTO newAdmin) {
-        adminService.createAdmin(newAdmin);
-        emailService.sendAccountVerificationEmail(newAdmin.getEmail());
+    public Long createAdmin(@RequestBody UserDTO newAdmin) {
+        Admin createdAdmin = adminService.createAdmin(newAdmin);
+        emailService.sendAccountVerificationEmail(createdAdmin);
+        return createdAdmin.getId();
     }
 
     @PostMapping("/login")
@@ -41,8 +42,9 @@ public class AdminController {
 
     @PostMapping("/admins/{adminId}/matchers")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createMatcher(@PathVariable Long adminId, @RequestBody MatcherDTO newMatcher) {
-        adminService.createMatcher(adminId, newMatcher);
+    public Long createMatcher(@PathVariable Long adminId, @RequestBody MatcherDTO newMatcher) {
+        Matcher createdMatcher = adminService.createMatcher(adminId, newMatcher);
+        return createdMatcher.getId();
     }
 
     @GetMapping("/admins/{adminId}/matchers")
@@ -58,5 +60,10 @@ public class AdminController {
     @GetMapping("/admins/{adminId}/matchers/{matcherId}")
     public Matcher getMatcher(@PathVariable Long adminId, @PathVariable Long matcherId) {
         return adminService.getMatcherById(adminId, matcherId);
+    }
+
+    @PostMapping("/admins/{adminId}/{matcherId}/students")
+    public Matcher addStudents(@PathVariable Long adminId, @PathVariable Long matcherId, @RequestBody List<String> studentEmails){
+        return adminService.addNewStudents(adminId, matcherId, studentEmails);
     }
 }

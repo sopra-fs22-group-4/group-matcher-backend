@@ -1,10 +1,10 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
+import ch.uzh.soprafs22.groupmatcher.TestingUtils;
 import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
-import ch.uzh.soprafs22.groupmatcher.model.Admin;
-import ch.uzh.soprafs22.groupmatcher.model.Matcher;
+import ch.uzh.soprafs22.groupmatcher.model.*;
 import ch.uzh.soprafs22.groupmatcher.repository.AdminRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -123,5 +124,21 @@ class AdminServiceTest {
         verify(matcherRepository, times(1)).save(any());
         assertEquals(testMatcherDTO.getGroupSize(), createdMatcher.getGroupSize());
         assertEquals(MatchingStrategy.MOST_SIMILAR, createdMatcher.getMatchingStrategy());
+    }
+
+    @Test
+    void addNewStudents_valid(){
+        Matcher testMatcher = new Matcher();
+        testMatcher.setId(1L);
+        testMatcher.getAdmins().add(testAdmin);
+        Student testStudent = TestingUtils.createStudent(3L, 3);
+        testStudent.setMatcher(testMatcher);
+        testMatcher.getStudents().add(testStudent);
+        List<String> testStudents = List.of("new-student-1@test.com", "new-student-2@test.com");
+        given(matcherRepository.findById(testMatcher.getId())).willReturn(Optional.of(testMatcher));
+        given(studentRepository.existsByMatcherIdAndEmail(anyLong(), anyString())).willReturn(false);
+        assertEquals(1, testMatcher.getStudents().size());
+        Matcher storedMatcher = adminService.addNewStudents(testAdmin.getId(), testMatcher.getId(), testStudents);
+        assertEquals(3, storedMatcher.getStudents().size());
     }
 }

@@ -1,7 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.model.projections;
 
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.rest.core.config.Projection;
 
 import java.time.ZonedDateTime;
@@ -20,7 +19,6 @@ public interface MatcherOverview {
 
     ZonedDateTime getDueDate();
 
-    @Value("#{target.active}")
     boolean isActive();
 
 }
