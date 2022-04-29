@@ -29,6 +29,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
     boolean existsByIdInAndTeamIsNotNull(Set<Long> studentsIds);
     List<Submission> findByMatcher_Admins_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(Long adminId, Pageable pageable);
+    List<Submission> findByMatcher_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(Long matcherId, Pageable pageable);
 
     Integer countByMatcher_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(Long matcherId);
 }
