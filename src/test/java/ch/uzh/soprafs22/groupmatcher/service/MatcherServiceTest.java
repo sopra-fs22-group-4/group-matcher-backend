@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -178,5 +179,19 @@ class MatcherServiceTest {
         String studentEmail = testStudent.getEmail();
         given(answerRepository.findByIdAndQuestion_Matcher_Id(testAnswer.getId(), testMatcher.getId())).willReturn(Optional.empty());
         assertThrows(ResponseStatusException.class,() -> matcherService.submitStudentAnswers(matcherId, studentEmail, answerIds));
+    }
+
+    @Test
+    void addNewStudents_valid(){
+        Long matcherId = testMatcher.getId();
+        Student student1 = TestingUtils.createStudent(11L,0);
+        Student student2 = TestingUtils.createStudent(12L,1);
+        Set<Student> testStudents = Set.of(student1,student2);
+
+        given(matcherRepository.findById(anyLong())).willReturn(Optional.of(testMatcher));
+
+        matcherService.addNewStudents(matcherId, testStudents);
+
+        assertEquals(testStudents, testMatcher.getStudents());
     }
 }
