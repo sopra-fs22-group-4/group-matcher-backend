@@ -23,6 +23,4 @@ public interface MatcherOverview {
     @Value("#{target.active}")
     boolean isActive();
 
-    @Value("#{@studentRepository.countByMatcher_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(target.id)}")
-    Integer getSubmissionsCount();
 }

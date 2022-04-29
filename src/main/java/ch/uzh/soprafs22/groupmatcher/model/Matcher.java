@@ -40,14 +40,10 @@ public class Matcher {
 
     private ZonedDateTime dueDate;
 
-    private boolean reminder;
-
     @Enumerated(EnumType.STRING)
     private MatchingStrategy matchingStrategy = MatchingStrategy.MOST_SIMILAR;
 
     private Integer groupSize;
-
-    private Integer minGroupSize;
 
     @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
     private List<Question> questions = new ArrayList<>();

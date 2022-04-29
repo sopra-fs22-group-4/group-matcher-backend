@@ -1,6 +1,8 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.model.*;
+import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherOverview;
+import ch.uzh.soprafs22.groupmatcher.model.projections.StudentOverview;
 import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import ch.uzh.soprafs22.groupmatcher.repository.AnswerRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
@@ -18,7 +20,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static java.time.ZonedDateTime.now;
 
@@ -35,15 +36,23 @@ public class MatcherService {
 
     private TeamRepository teamRepository;
 
-    public Student verifyStudentEmail(Long matcherId, String studentEmail) {
+    public MatcherOverview getMatcherOverview(Long matcherId) {
+        return matcherRepository.findMatcherById(matcherId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+    }
+
+    public StudentOverview verifyStudentEmail(Long matcherId, String studentEmail) {
         return studentRepository.findByMatcherIdAndEmail(matcherId, studentEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid email address"));
     }
 
-    public Student submitStudentAnswers(Student student, List<Long> answerIds) {
-        Set<Answer> quizAnswers = answerIds.stream().map(answerId -> // Verify the answer belongs to the student's matcher
-                answerRepository.findByIdAndQuestion_Matcher_Id(answerId, student.getMatcher().getId())
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid answer ID"))).collect(Collectors.toSet());
+    public Student submitStudentAnswers(Long matcherId, String studentEmail, List<Long> answerIds) {
+        Student student = studentRepository.getByMatcherIdAndEmail(matcherId, studentEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid email address"));
+        List<Answer> quizAnswers = answerIds.stream().map(answerId -> // Verify the answer belongs to the student's matcher
+                answerRepository.findByIdAndQuestion_Matcher_Id(answerId, matcherId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid answer ID"))).toList();
         student.setAnswers(quizAnswers);
         student.setSubmissionTimestamp(now());
         return studentRepository.save(student);

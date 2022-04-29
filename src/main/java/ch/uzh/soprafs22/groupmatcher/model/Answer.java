@@ -1,6 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.model;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,10 +23,12 @@ public class Answer {
 
     private Integer ordinalNum;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "question_id")
     private Question question;
 
+    @JsonIgnore
     @ManyToMany(mappedBy = "answers", cascade = CascadeType.ALL)
     private List<Student> students = new ArrayList<>();
 
