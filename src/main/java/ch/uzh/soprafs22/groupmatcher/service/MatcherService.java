@@ -52,7 +52,7 @@ public class MatcherService {
     public void addNewStudents(Long matcherId, Set<Student> students) {
         Matcher storedMatcher = matcherRepository.findById(matcherId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No account found for the given ID"));
-        storedMatcher.setStudents(students);
+        storedMatcher.getStudents().addAll(students);
         matcherRepository.save(storedMatcher);
     }
 
