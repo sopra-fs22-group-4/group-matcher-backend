@@ -40,7 +40,7 @@ class MatcherControllerTest {
     @SneakyThrows
     @Test
     void checkValidStudent(){
-        given(matcherService.verifyStudentEmail(any(Long.class),any(String.class))).willReturn(testStudent);
+        given(matcherService.verifyStudentEmail(any(Long.class),any(String.class))).willReturn(TestingUtils.convertToOverview(testStudent));
         mockMvc.perform(get("/matchers/{matcherId}/students/{studentEmail}}",
                         testMatcher.getId(), testStudent.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))

@@ -1,6 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.repository;
 
 import ch.uzh.soprafs22.groupmatcher.model.Student;
+import ch.uzh.soprafs22.groupmatcher.model.projections.StudentOverview;
 import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,7 +26,9 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
     List<Student> findByIdIn(Set<Long> studentsIds);
 
-    Optional<Student> findByMatcherIdAndEmail(Long matcherId, String email);
+    Optional<StudentOverview> findByMatcherIdAndEmail(Long matcherId, String email);
+
+    Optional<Student> getByMatcherIdAndEmail(Long matcherId, String email);
 
     boolean existsByIdInAndTeamIsNotNull(Set<Long> studentsIds);
     List<Submission> findByMatcher_Admins_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(Long adminId, Pageable pageable);

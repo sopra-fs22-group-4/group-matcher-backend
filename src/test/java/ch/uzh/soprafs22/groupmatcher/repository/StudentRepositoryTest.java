@@ -2,6 +2,7 @@ package ch.uzh.soprafs22.groupmatcher.repository;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
 import ch.uzh.soprafs22.groupmatcher.model.*;
+import ch.uzh.soprafs22.groupmatcher.model.projections.StudentOverview;
 import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -111,7 +112,7 @@ class StudentRepositoryTest {
     @Test
     void findByMatcherIdAndStudentsEmail_failed() {
         Matcher storedMatcher = matcherRepository.save(testMatcher);
-        Optional<Student> searchedStudent = studentRepository.findByMatcherIdAndEmail(
+        Optional<StudentOverview> searchedStudent = studentRepository.findByMatcherIdAndEmail(
                 storedMatcher.getId(), "test@email.com");
         assertTrue(searchedStudent.isEmpty());
     }

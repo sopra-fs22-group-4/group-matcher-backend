@@ -4,7 +4,7 @@ import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
-import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherOverview;
+import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherAdminOverview;
 import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import ch.uzh.soprafs22.groupmatcher.service.AdminService;
 import ch.uzh.soprafs22.groupmatcher.service.EmailService;
@@ -26,7 +26,7 @@ public class AdminController {
     @ResponseStatus(HttpStatus.CREATED)
     public void createAdmin(@RequestBody UserDTO newAdmin) {
         adminService.createAdmin(newAdmin);
-        emailService.sendAccountVerificationEmail(newAdmin.getEmail());
+//        emailService.sendAccountVerificationEmail(newAdmin.getEmail());
     }
 
     @PostMapping("/login")
@@ -46,7 +46,7 @@ public class AdminController {
     }
 
     @GetMapping("/admins/{adminId}/matchers")
-    public List<MatcherOverview> getMatchers(@PathVariable Long adminId) {
+    public List<MatcherAdminOverview> getMatchers(@PathVariable Long adminId) {
         return adminService.getMatchersByAdminId(adminId);
     }
 

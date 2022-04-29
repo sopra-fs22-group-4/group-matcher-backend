@@ -8,8 +8,8 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import java.time.ZonedDateTime;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -40,6 +40,7 @@ public class Student {
     @JoinTable(name = "student_answers",
             joinColumns = @JoinColumn(name = "student_id"),
             inverseJoinColumns = @JoinColumn(name = "answers_id"))
-    private Set<Answer> answers = new LinkedHashSet<>();
+    @OrderBy("question.id")
+    private List<Answer> answers = new ArrayList<>();
 
 }

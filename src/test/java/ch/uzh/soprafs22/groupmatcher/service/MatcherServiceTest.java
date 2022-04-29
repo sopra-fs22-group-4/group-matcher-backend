@@ -5,6 +5,7 @@ import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Question;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
+import ch.uzh.soprafs22.groupmatcher.model.projections.StudentOverview;
 import ch.uzh.soprafs22.groupmatcher.repository.AnswerRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
@@ -145,9 +146,10 @@ class MatcherServiceTest {
 
     @Test
     void checkStudentEmail_valid() {
-        given(studentRepository.findByMatcherIdAndEmail(testMatcher.getId(), testStudent.getEmail())).willReturn(Optional.of(testStudent));
-        Student storedStudent = matcherService.verifyStudentEmail(testMatcher.getId(), testStudent.getEmail());
-        assertEquals(testStudent, storedStudent);
+        StudentOverview studentOverview = TestingUtils.convertToOverview(testStudent);
+        given(studentRepository.findByMatcherIdAndEmail(testMatcher.getId(), testStudent.getEmail())).willReturn(Optional.of(studentOverview));
+        StudentOverview storedStudentOverview = matcherService.verifyStudentEmail(testMatcher.getId(), testStudent.getEmail());
+        assertEquals(studentOverview, storedStudentOverview);
     }
 
     @Test
@@ -163,8 +165,8 @@ class MatcherServiceTest {
         testAnswer.setId(3L);
         given(answerRepository.findByIdAndQuestion_Matcher_Id(testAnswer.getId(), testMatcher.getId())).willReturn(Optional.of(testAnswer));
         assertTrue(testStudent.getAnswers().isEmpty());
-        Student storedStudent = matcherService.submitStudentAnswers(testStudent, List.of(testAnswer.getId()));
-        assertEquals(Set.of(testAnswer), storedStudent.getAnswers());
+        Student storedStudent = matcherService.submitStudentAnswers(testMatcher.getId(), testStudent.getEmail(), List.of(testAnswer.getId()));
+        assertEquals(List.of(testAnswer), storedStudent.getAnswers());
     }
 
     @Test
@@ -172,7 +174,9 @@ class MatcherServiceTest {
         Answer testAnswer = testMatcher.getQuestions().get(0).getAnswers().get(0);
         testAnswer.setId(3L);
         List<Long> answerIds = List.of(testAnswer.getId());
+        Long matcherId = testMatcher.getId();
+        String studentEmail = testStudent.getEmail();
         given(answerRepository.findByIdAndQuestion_Matcher_Id(testAnswer.getId(), testMatcher.getId())).willReturn(Optional.empty());
-        assertThrows(ResponseStatusException.class,() -> matcherService.submitStudentAnswers(testStudent, answerIds));
+        assertThrows(ResponseStatusException.class,() -> matcherService.submitStudentAnswers(matcherId, studentEmail, answerIds));
     }
 }
