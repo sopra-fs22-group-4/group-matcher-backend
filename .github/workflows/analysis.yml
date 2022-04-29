@@ -30,3 +30,8 @@ jobs:
         MAIL_HOST: ${{ secrets.MAIL_HOST }}
         MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
         MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+    - uses: akhileshns/heroku-deploy@v3.12.12
+      with:
+        heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+        heroku_app_name: "group-matcher-api"
+        heroku_email: "valentine.herzl@uzh.ch"
