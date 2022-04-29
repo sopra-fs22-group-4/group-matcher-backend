@@ -5,12 +5,16 @@ import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
 import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import ch.uzh.soprafs22.groupmatcher.model.Question;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
+import ch.uzh.soprafs22.groupmatcher.model.projections.StudentOverview;
+import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class TestingUtils {
+
+    private static SpelAwareProxyProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
 
     public static Student createStudent(Long studentId, Integer emailNum) {
         Student student = new Student();
@@ -37,6 +41,10 @@ public class TestingUtils {
 
     public static Set<Student> createStudents(int numStudents) {
         return IntStream.range(0, numStudents).mapToObj(num -> createStudent(null, num)).collect(Collectors.toSet());
+    }
+
+    public static StudentOverview convertToOverview(Student student) {
+        return projectionFactory.createProjection(StudentOverview.class, student);
     }
 
 }

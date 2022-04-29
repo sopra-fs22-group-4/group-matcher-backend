@@ -1,5 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.controller;
 
+import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherOverview;
+import ch.uzh.soprafs22.groupmatcher.model.projections.StudentOverview;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
 import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import ch.uzh.soprafs22.groupmatcher.service.MatcherService;
@@ -16,9 +18,13 @@ import java.util.Set;
 public class MatcherController {
 
     private MatcherService matcherService;
+    @GetMapping("/{matcherId}")
+    public MatcherOverview getMatcherOverview(@PathVariable Long matcherId) {
+        return matcherService.getMatcherOverview(matcherId);
+    }
 
     @GetMapping("/{matcherId}/students/{studentEmail}")
-    public Student verifyStudentEmail(@PathVariable Long matcherId, @PathVariable String studentEmail) {
+    public StudentOverview verifyStudentEmail(@PathVariable Long matcherId, @PathVariable String studentEmail) {
         return matcherService.verifyStudentEmail(matcherId, studentEmail);
     }
 
@@ -30,7 +36,7 @@ public class MatcherController {
     @PutMapping("/{matcherId}/students/{studentEmail}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void submitStudentAnswers(@PathVariable Long matcherId, @PathVariable String studentEmail, @RequestBody List<Long> answerIds) {
-        matcherService.submitStudentAnswers(verifyStudentEmail(matcherId, studentEmail), answerIds);
+        matcherService.submitStudentAnswers(matcherId, studentEmail, answerIds);
     }
 
     @PostMapping("/{matcherId}/students")

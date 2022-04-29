@@ -4,7 +4,7 @@ import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
-import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherOverview;
+import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherAdminOverview;
 import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import ch.uzh.soprafs22.groupmatcher.repository.AdminRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
@@ -71,7 +71,7 @@ public class AdminService {
         return storedMather;
     }
 
-    public List<MatcherOverview> getMatchersByAdminId(Long adminId) {
+    public List<MatcherAdminOverview> getMatchersByAdminId(Long adminId) {
         return matcherRepository.findByAdmins_IdOrderByDueDateDesc(adminId);
     }
 
