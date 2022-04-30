@@ -2,13 +2,12 @@ package ch.uzh.soprafs22.groupmatcher;
 
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionCategory;
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
-import ch.uzh.soprafs22.groupmatcher.model.Admin;
-import ch.uzh.soprafs22.groupmatcher.model.Answer;
-import ch.uzh.soprafs22.groupmatcher.model.Question;
-import ch.uzh.soprafs22.groupmatcher.model.Student;
+import ch.uzh.soprafs22.groupmatcher.model.*;
 import ch.uzh.soprafs22.groupmatcher.model.projections.StudentOverview;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -47,6 +46,18 @@ public class TestingUtils {
         question.setQuestionType(QuestionType.SINGLE_CHOICE);
         question.setAnswers(IntStream.range(0, numAnswers).mapToObj(num -> createAnswer(question, num)).toList());
         return question;
+    }
+
+    public static Matcher createMatcher(Long matcherId){
+        Matcher testMatcher = new Matcher();
+        testMatcher.setId(matcherId);
+        testMatcher.setCourseName("Test Course");
+        testMatcher.setUniversity("Test University");
+        testMatcher.setDescription("Test Description");
+        testMatcher.setPublishDate(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
+        testMatcher.setPublishDate(ZonedDateTime.now().plus(3, ChronoUnit.DAYS));
+        testMatcher.setGroupSize(5);
+        return testMatcher;
     }
 
     public static Set<Student> createStudents(int numStudents) {
