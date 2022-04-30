@@ -1,6 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,10 +23,12 @@ public class Student {
 
     private String name;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "matcher_id")
     private Matcher matcher;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "team_id")
     private Team team;
@@ -33,6 +36,7 @@ public class Student {
     @JsonFormat(pattern = "dd.MM.yyyy")
     private ZonedDateTime submissionTimestamp;
 
+    @JsonIgnore
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "student_answers",
             joinColumns = @JoinColumn(name = "student_id"),

@@ -33,17 +33,15 @@ public class EmailService {
     }
 
     public void sendAccountVerificationEmail(Admin admin) {
-        mailSender.send(composeMessage(
-                "Verify Account",
-                "Hi %s!%nVerify your account: %s".formatted(admin.getName(), admin.getEmail()),
-                admin.getEmail()));
+        mailSender.send(composeMessage("Verify Account",
+                "Hi %s!%nVerify your account: https://group-matcher.herokuapp.com/verify/%s"
+                        .formatted(admin.getName(), admin.getId()), admin.getEmail()));
     }
 
     public void sendResponseVerificationEmail(Student student) {
-        mailSender.send(composeMessage(
-                "Verify Response",
-                "Hi %s!%nVerify your response: %s".formatted(student.getName(), student.getEmail()),
-                student.getEmail()));
+        mailSender.send(composeMessage("Verify Response",
+                "Hi %s!%nVerify your response: https://group-matcher.herokuapp.com/matchers/%s/verify/%s".formatted(
+                        student.getName(), student.getMatcher().getId(), student.getId()), student.getEmail()));
     }
 
     public String[] mapToRecipients(Set<Student> students) {
@@ -52,9 +50,8 @@ public class EmailService {
 
     public List<Matcher> activatePublishedMatchers() {
         return matcherRepository.findByPublishDateIsAfterAndActiveFalse(ZonedDateTime.now()).stream().map(matcher -> {
-            mailSender.send(composeMessage(
-                    "Link to Matching Quiz",
-                    "Hi student!%nFill out this quiz: %s".formatted(matcher.getId()),
+            mailSender.send(composeMessage("Link to Matching Quiz",
+                    "Hi student!%nFill out the quiz: https://group-matcher.herokuapp.com/matchers/%s".formatted(matcher.getId()),
                     mapToRecipients(matcher.getStudents())));
             matcher.setActive(true);
             return matcherRepository.save(matcher);

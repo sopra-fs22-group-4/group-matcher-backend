@@ -1,6 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.model;
 
 import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
@@ -52,7 +53,16 @@ public class Matcher {
     @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
     private Set<Student> students = new LinkedHashSet<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
     private List<Team> teams = new ArrayList<>();
+
+    public boolean isPublished() {
+        return publishDate.isAfter(ZonedDateTime.now());
+    }
+
+    public boolean isPastDue() {
+        return dueDate.isAfter(ZonedDateTime.now());
+    }
 
 }

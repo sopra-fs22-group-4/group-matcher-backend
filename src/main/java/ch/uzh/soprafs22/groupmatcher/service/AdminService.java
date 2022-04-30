@@ -1,10 +1,9 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
+import ch.uzh.soprafs22.groupmatcher.dto.QuestionDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
-import ch.uzh.soprafs22.groupmatcher.model.Admin;
-import ch.uzh.soprafs22.groupmatcher.model.Matcher;
-import ch.uzh.soprafs22.groupmatcher.model.Student;
+import ch.uzh.soprafs22.groupmatcher.model.*;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherAdminOverview;
 import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import ch.uzh.soprafs22.groupmatcher.repository.AdminRepository;
@@ -20,6 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 @Slf4j
 @AllArgsConstructor
@@ -34,7 +34,7 @@ public class AdminService {
 
     public Admin createAdmin(UserDTO userDTO){
         if (adminRepository.existsByEmail(userDTO.getEmail()))
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with the given Email already exists");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with the given e-mail already exists");
         Admin newAdmin = new ModelMapper().map(userDTO, Admin.class);
         return adminRepository.save(newAdmin);
     }
@@ -43,7 +43,7 @@ public class AdminService {
         Admin storedAdmin = adminRepository.findByEmailAndPassword(userDTO.getEmail(), userDTO.getPassword())
                 .orElseThrow(() -> adminRepository.findByEmail(userDTO.getEmail())
                         .map(foundEmail -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Incorrect password, please try again"))
-                        .orElse(new ResponseStatusException(HttpStatus.NOT_FOUND, "No account found for the given Email")));
+                        .orElse(new ResponseStatusException(HttpStatus.NOT_FOUND, "No account found for the given e-mail")));
         if (!storedAdmin.isVerified())
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unverified account, please check your inbox");
         return storedAdmin;
@@ -62,6 +62,21 @@ public class AdminService {
         Matcher newMatcher = new ModelMapper().map(matcherDTO, Matcher.class);
         newMatcher.setAdmins(Set.of(storedAdmin));
         return matcherRepository.save(newMatcher);
+    }
+
+    public Matcher createQuestion(Long adminId, Long matcherId, QuestionDTO questionDTO) {
+        Matcher storedMatcher = getMatcherById(adminId, matcherId);
+        Question newQuestion = new ModelMapper().map(questionDTO, Question.class);
+        newQuestion.setOrdinalNum(storedMatcher.getQuestions().size()+1);
+        newQuestion.setAnswers(IntStream.range(0, questionDTO.getAnswers().size()).mapToObj(index -> {
+            Answer newAnswer = new Answer();
+            newAnswer.setContent(questionDTO.getAnswers().get(index));
+            newAnswer.setOrdinalNum(index+1);
+            newAnswer.setQuestion(newQuestion);
+            return newAnswer;
+        }).toList());
+        storedMatcher.getQuestions().add(newQuestion);
+        return matcherRepository.save(storedMatcher);
     }
 
     public Matcher getMatcherById(Long adminId, Long matcherId) {
@@ -92,5 +107,11 @@ public class AdminService {
     public List<Submission> getLatestSubmissionsByAdminId(Long adminId) {
         return studentRepository.findByMatcher_Admins_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(
                 adminId, Pageable.ofSize(10));
+    }
+
+    public List<Submission> getLatestSubmissionsByMatcherId(Long adminId, Long matcherId) {
+        getMatcherById(adminId, matcherId); // Verify the admin can access the matcher
+        return studentRepository.findByMatcher_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(
+                matcherId, Pageable.ofSize(10));
     }
 }

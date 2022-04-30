@@ -1,12 +1,11 @@
 package ch.uzh.soprafs22.groupmatcher.controller;
 
+import ch.uzh.soprafs22.groupmatcher.TestingUtils;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.service.AdminService;
 import ch.uzh.soprafs22.groupmatcher.service.EmailService;
-import ch.uzh.soprafs22.groupmatcher.TestingUtils;
-
 import com.google.gson.Gson;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,11 +19,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -50,7 +45,8 @@ class AdminControllerTest {
         testUserDTO = new UserDTO();
         testUserDTO.setEmail(testAdmin.getEmail());
         testUserDTO.setPassword(testAdmin.getPassword());
-        testMatcher = TestingUtils.createMatcher(1L);
+        testMatcher = new Matcher();
+        testMatcher.setId(2L);
     }
 
     @Test
@@ -60,7 +56,6 @@ class AdminControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(new Gson().toJson(testUserDTO)))
                 .andExpect(status().isCreated());
-        verify(emailService, times(1)).sendAccountVerificationEmail(testAdmin);
     }
 
     @Test
@@ -82,7 +77,6 @@ class AdminControllerTest {
         mockMvc.perform(get("/admins/{adminId}/matchers/{matcherId}",
                         testAdmin.getId(),testMatcher.getId())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(testMatcher.getId().intValue())))
                 .andExpect(jsonPath("$.university", is(testMatcher.getUniversity())))
                 .andExpect(jsonPath("$.courseName", is(testMatcher.getCourseName())));
@@ -92,7 +86,7 @@ class AdminControllerTest {
     void updateStudentToMatcher_successful() throws Exception {
         testAdmin.setVerified(true);
         given(adminService.verifyAccount(anyLong())).willReturn(testAdmin);
-        mockMvc.perform(put("/admins/{adminId}/verify",testAdmin.getId())
+        mockMvc.perform(put("/admins/{adminId}/verify", testAdmin.getId())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(testAdmin.getId().intValue())))

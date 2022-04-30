@@ -74,7 +74,10 @@ class EmailServiceTest {
 
     @Test
     void sendResponseVerificationEmailTest() {
+        Matcher testMatcher = new Matcher();
+        testMatcher.setId(1L);
         Student testStudent = TestingUtils.createStudent(2L, 2);
+        testStudent.setMatcher(testMatcher);
         emailService.sendResponseVerificationEmail(testStudent);
         verify(mailSender).send(messageCaptor.capture());
         SimpleMailMessage sentEmail = messageCaptor.getValue();

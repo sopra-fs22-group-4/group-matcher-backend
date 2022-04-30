@@ -1,8 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.dto;
 
-import ch.uzh.soprafs22.groupmatcher.constant.QuestionCategory;
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
-import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,8 +12,7 @@ import java.util.List;
 public class QuestionDTO {
     private Integer ordinalNum;
     private String content;
-    private Float weight;
-    private QuestionCategory questionCategory;
+    private Double weight = 1.0;
     private QuestionType questionType;
-    private List<Answer> answers = new ArrayList<>();
+    private List<String> answers = new ArrayList<>();
 }

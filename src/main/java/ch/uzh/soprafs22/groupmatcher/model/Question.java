@@ -23,7 +23,7 @@ public class Question {
 
     private String content;
 
-    private Float weight;
+    private Double weight;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

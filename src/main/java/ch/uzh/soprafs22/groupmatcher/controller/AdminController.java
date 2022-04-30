@@ -1,6 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.controller;
 
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
+import ch.uzh.soprafs22.groupmatcher.dto.QuestionDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
@@ -62,7 +63,17 @@ public class AdminController {
         return adminService.getMatcherById(adminId, matcherId);
     }
 
-    @PostMapping("/admins/{adminId}/{matcherId}/students")
+    @PostMapping("/admins/{adminId}/matchers/{matcherId}/questions")
+    public Matcher createQuestion(@PathVariable Long adminId, @PathVariable Long matcherId, @RequestBody QuestionDTO newQuestion) {
+        return adminService.createQuestion(adminId, matcherId, newQuestion);
+    }
+
+    @GetMapping("/admins/{adminId}/matchers/{matcherId}/submissions/latest")
+    public List<Submission> getLatestSubmissions(@PathVariable Long adminId, @PathVariable Long matcherId) {
+        return adminService.getLatestSubmissionsByMatcherId(adminId, matcherId);
+    }
+
+    @PostMapping("/admins/{adminId}/matchers/{matcherId}/students")
     public Matcher addStudents(@PathVariable Long adminId, @PathVariable Long matcherId, @RequestBody List<String> studentEmails){
         return adminService.addNewStudents(adminId, matcherId, studentEmails);
     }

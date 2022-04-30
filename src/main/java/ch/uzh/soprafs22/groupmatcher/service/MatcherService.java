@@ -3,7 +3,6 @@ package ch.uzh.soprafs22.groupmatcher.service;
 import ch.uzh.soprafs22.groupmatcher.model.*;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherOverview;
 import ch.uzh.soprafs22.groupmatcher.model.projections.StudentOverview;
-import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import ch.uzh.soprafs22.groupmatcher.repository.AnswerRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
@@ -11,7 +10,6 @@ import ch.uzh.soprafs22.groupmatcher.repository.TeamRepository;
 import com.google.common.collect.Sets;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -60,11 +58,6 @@ public class MatcherService {
         student.setAnswers(quizAnswers);
         student.setSubmissionTimestamp(now());
         return studentRepository.save(student);
-    }
-
-    public List<Submission> getLatestSubmissionsByMatcherId(Long matcherId) {
-        return studentRepository.findByMatcher_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(
-                matcherId, Pageable.ofSize(10));
     }
 
     private Map.Entry<Set<Long>, Double> createTeamEntry(Set<Long> teamIds, List<Question> questions) {

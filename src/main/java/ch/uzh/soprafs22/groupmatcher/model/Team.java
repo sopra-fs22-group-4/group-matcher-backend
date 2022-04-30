@@ -1,5 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,6 +22,7 @@ public class Team {
 
     private Double skillScore;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "matcher_id")
     private Matcher matcher;
