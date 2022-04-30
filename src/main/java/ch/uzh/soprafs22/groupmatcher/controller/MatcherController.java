@@ -15,6 +15,7 @@ import java.util.List;
 public class MatcherController {
 
     private MatcherService matcherService;
+
     @GetMapping("/{matcherId}")
     public MatcherOverview getMatcherOverview(@PathVariable Long matcherId) {
         return matcherService.getMatcherOverview(matcherId);

@@ -2,7 +2,9 @@ package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
 import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
+import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
+import ch.uzh.soprafs22.groupmatcher.dto.QuestionDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.*;
 import ch.uzh.soprafs22.groupmatcher.repository.AdminRepository;
@@ -140,5 +142,28 @@ class AdminServiceTest {
         assertEquals(1, testMatcher.getStudents().size());
         Matcher storedMatcher = adminService.addNewStudents(testAdmin.getId(), testMatcher.getId(), testStudents);
         assertEquals(3, storedMatcher.getStudents().size());
+    }
+
+    @Test
+    void createQuestion_success() {
+        QuestionDTO testQuestionDTO = new QuestionDTO();
+        testQuestionDTO.setContent("Test Question");
+        testQuestionDTO.setQuestionType(QuestionType.SINGLE_CHOICE);
+        testQuestionDTO.setAnswers(List.of("Test Answer"));
+        Matcher testMatcher = new Matcher();
+        testMatcher.setId(1L);
+        testMatcher.getAdmins().add(testAdmin);
+        given(matcherRepository.findById(testMatcher.getId())).willReturn(Optional.of(testMatcher));
+        assertTrue(testMatcher.getQuestions().isEmpty());
+        Matcher storedMatcher = adminService.createQuestion(testAdmin.getId(), testMatcher.getId(), testQuestionDTO);
+        assertEquals(1, testMatcher.getQuestions().size());
+        assertEquals(testMatcher.getId(), storedMatcher.getQuestions().get(0).getMatcher().getId());
+        assertEquals(testQuestionDTO.getContent()+"?", storedMatcher.getQuestions().get(0).getContent());
+        assertEquals(testQuestionDTO.getQuestionType(), storedMatcher.getQuestions().get(0).getQuestionType());
+        assertEquals(testQuestionDTO.getWeight(), storedMatcher.getQuestions().get(0).getWeight());
+        assertEquals(testQuestionDTO.getAnswers(), storedMatcher.getQuestions().get(0).getAnswers()
+                .stream().map(Answer::getContent).toList());
+
+
     }
 }

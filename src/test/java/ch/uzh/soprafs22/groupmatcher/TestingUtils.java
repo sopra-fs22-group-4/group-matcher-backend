@@ -3,6 +3,7 @@ package ch.uzh.soprafs22.groupmatcher;
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionCategory;
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
 import ch.uzh.soprafs22.groupmatcher.model.*;
+import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherOverview;
 import ch.uzh.soprafs22.groupmatcher.model.projections.StudentOverview;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 
@@ -66,6 +67,10 @@ public class TestingUtils {
 
     public static StudentOverview convertToOverview(Student student) {
         return projectionFactory.createProjection(StudentOverview.class, student);
+    }
+
+    public static MatcherOverview convertToOverview(Matcher matcher) {
+        return projectionFactory.createProjection(MatcherOverview.class, matcher);
     }
 
 }
