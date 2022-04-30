@@ -67,6 +67,7 @@ public class AdminService {
     public Matcher createQuestion(Long adminId, Long matcherId, QuestionDTO questionDTO) {
         Matcher storedMatcher = getMatcherById(adminId, matcherId);
         Question newQuestion = new ModelMapper().map(questionDTO, Question.class);
+        newQuestion.setMatcher(storedMatcher);
         newQuestion.setOrdinalNum(storedMatcher.getQuestions().size()+1);
         newQuestion.setAnswers(IntStream.range(0, questionDTO.getAnswers().size()).mapToObj(index -> {
             Answer newAnswer = new Answer();
