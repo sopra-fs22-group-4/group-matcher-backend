@@ -15,7 +15,7 @@ import java.util.Set;
 public interface StudentRepository extends JpaRepository<Student, Long> {
 
     @Query("SELECT student.id FROM Student student WHERE student.matcher.id = :matcherId " +
-            "AND size(student.answers) = size(student.matcher.questions) AND student.team IS NULL")
+            "AND size(student.selectedAnswers) = size(student.matcher.questions) AND student.team IS NULL")
     Set<Long> getStudentsWithoutTeam(@Param("matcherId") Long matcherId);
 
     @Query(value = "SELECT max(team_answers.frequency) FROM " +

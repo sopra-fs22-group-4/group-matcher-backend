@@ -1,6 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.controller;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
+import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
 import ch.uzh.soprafs22.groupmatcher.service.MatcherService;
@@ -18,8 +19,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -44,11 +44,13 @@ class MatcherControllerTest {
     @SneakyThrows
     @Test
     void checkValidStudent(){
-        given(matcherService.verifyStudentEmail(testMatcher.getId(), testStudent.getEmail()))
-                .willReturn(TestingUtils.convertToOverview(testStudent));
-        mockMvc.perform(get("/matchers/{matcherId}/students/{studentEmail}",
-                        testMatcher.getId(), testStudent.getEmail())
-                        .contentType(MediaType.APPLICATION_JSON))
+        UserDTO testStudentDTO = new UserDTO();
+        testStudentDTO.setName("Test Student");
+        testStudentDTO.setEmail(testStudent.getEmail());
+        given(matcherService.findMatcherStudent(testMatcher.getId(), testStudentDTO)).willReturn(testStudent);
+        mockMvc.perform(post("/matchers/{matcherId}/students", testMatcher.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new Gson().toJson(testStudentDTO)))
                 .andExpect(jsonPath("$.id", is(testStudent.getId().intValue())));
     }
 

@@ -60,7 +60,7 @@ class StudentRepositoryTest {
         storedMatcher.getStudents().forEach(student -> {
             mostCommonAnswer.getStudents().add(student);
             Student storedStudent = studentRepository.findById(student.getId()).orElseThrow(EntityNotFoundException::new);
-            storedStudent.getAnswers().add(mostCommonAnswer);
+            storedStudent.getSelectedAnswers().add(mostCommonAnswer);
             studentRepository.save(student);
         });
         Set<Long> studentsIds = storedMatcher.getStudents().stream().map(Student::getId).collect(Collectors.toSet());
@@ -77,7 +77,7 @@ class StudentRepositoryTest {
             Answer selectedAnswer = question.getAnswers().get(index.getAndIncrement() % 2);
             selectedAnswer.getStudents().add(student);
             Student storedStudent = studentRepository.findById(student.getId()).orElseThrow(EntityNotFoundException::new);
-            storedStudent.getAnswers().add(selectedAnswer);
+            storedStudent.getSelectedAnswers().add(selectedAnswer);
             studentRepository.save(storedStudent);
         });
         Set<Long> studentsIds = storedMatcher.getStudents().stream().map(Student::getId).collect(Collectors.toSet());
@@ -94,7 +94,7 @@ class StudentRepositoryTest {
             Answer selectedAnswer = question.getAnswers().get(index.getAndIncrement());
             selectedAnswer.getStudents().add(student);
             Student storedStudent = studentRepository.findById(student.getId()).orElseThrow(EntityNotFoundException::new);
-            storedStudent.getAnswers().add(selectedAnswer);
+            storedStudent.getSelectedAnswers().add(selectedAnswer);
             studentRepository.save(storedStudent);
         });
         Set<Long> studentsIds = storedMatcher.getStudents().stream().map(Student::getId).collect(Collectors.toSet());

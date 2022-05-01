@@ -1,7 +1,8 @@
 package ch.uzh.soprafs22.groupmatcher.controller;
 
+import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
+import ch.uzh.soprafs22.groupmatcher.model.Student;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherOverview;
-import ch.uzh.soprafs22.groupmatcher.model.projections.StudentOverview;
 import ch.uzh.soprafs22.groupmatcher.service.MatcherService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,9 +22,9 @@ public class MatcherController {
         return matcherService.getMatcherOverview(matcherId);
     }
 
-    @GetMapping("/{matcherId}/students/{studentEmail}")
-    public StudentOverview verifyStudentEmail(@PathVariable Long matcherId, @PathVariable String studentEmail) {
-        return matcherService.verifyStudentEmail(matcherId, studentEmail);
+    @PostMapping("/{matcherId}/students")
+    public Student findStudent(@PathVariable Long matcherId, @RequestBody UserDTO student) {
+        return matcherService.findMatcherStudent(matcherId, student);
     }
 
     @PutMapping("/{matcherId}/students/{studentEmail}")

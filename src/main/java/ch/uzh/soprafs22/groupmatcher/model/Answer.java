@@ -26,7 +26,7 @@ public class Answer {
     private Question question;
 
     @JsonIgnore
-    @ManyToMany(mappedBy = "answers", cascade = CascadeType.ALL)
+    @ManyToMany(mappedBy = "selectedAnswers", cascade = CascadeType.ALL)
     private List<Student> students = new ArrayList<>();
 
 }
