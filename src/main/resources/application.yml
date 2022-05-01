@@ -10,7 +10,7 @@ spring:
   jpa:
     generate-ddl: true
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
   mail:
     host: ${MAIL_HOST:127.0.0.1}
     port: 587
