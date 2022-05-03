@@ -9,6 +9,7 @@ import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.*;
 import ch.uzh.soprafs22.groupmatcher.repository.AdminRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
+import ch.uzh.soprafs22.groupmatcher.repository.QuestionRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +36,9 @@ class AdminServiceTest {
 
     @MockBean
     private MatcherRepository matcherRepository;
+
+    @MockBean
+    private QuestionRepository questionRepository;
 
     @MockBean
     private StudentRepository studentRepository;
@@ -152,6 +158,7 @@ class AdminServiceTest {
         testQuestionDTO.setAnswers(List.of("Test Answer"));
         Matcher testMatcher = new Matcher();
         testMatcher.setId(1L);
+        testMatcher.setPublishDate(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
         testMatcher.getAdmins().add(testAdmin);
         given(matcherRepository.findById(testMatcher.getId())).willReturn(Optional.of(testMatcher));
         assertTrue(testMatcher.getQuestions().isEmpty());

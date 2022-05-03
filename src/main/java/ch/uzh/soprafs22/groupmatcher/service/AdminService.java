@@ -8,6 +8,7 @@ import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherAdminOverview;
 import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import ch.uzh.soprafs22.groupmatcher.repository.AdminRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
+import ch.uzh.soprafs22.groupmatcher.repository.QuestionRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,8 @@ public class AdminService {
     private AdminRepository adminRepository;
 
     private MatcherRepository matcherRepository;
+
+    private QuestionRepository questionRepository;
 
     private StudentRepository studentRepository;
 
@@ -66,6 +69,8 @@ public class AdminService {
 
     public Matcher createQuestion(Long adminId, Long matcherId, QuestionDTO questionDTO) {
         Matcher storedMatcher = getMatcherById(adminId, matcherId);
+        if (storedMatcher.isPublished())
+            throw new ResponseStatusException(HttpStatus.METHOD_NOT_ALLOWED, "Matchers cannot be edited after publication");
         Question newQuestion = new ModelMapper().map(questionDTO, Question.class);
         if (!newQuestion.getContent().endsWith("?"))
             newQuestion.setContent(newQuestion.getContent() + "?");
@@ -101,6 +106,21 @@ public class AdminService {
                     storedMatcher.getStudents().add(newStudent);
                 });
         return matcherRepository.save(storedMatcher);
+    }
+
+    public Matcher updateMatcher(Long adminId, Long matcherId, MatcherDTO matcherDTO) {
+        Matcher existingMatcher = getMatcherById(adminId, matcherId);
+        new ModelMapper().map(matcherDTO, existingMatcher);
+        return matcherRepository.save(existingMatcher);
+    }
+
+    public Question updateQuestion(Long adminId, Long questionId, QuestionDTO questionDTO) {
+        Question existingQuestion = questionRepository.findById(questionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No question found for the given ID"));
+        if (existingQuestion.getMatcher().getAdmins().stream().noneMatch(admin -> admin.getId().equals(adminId)))
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Matchers can be edited by admins only");
+        new ModelMapper().map(questionDTO, existingQuestion);
+        return questionRepository.save(existingQuestion);
     }
 
     public List<MatcherAdminOverview> getMatchersByAdminId(Long adminId) {

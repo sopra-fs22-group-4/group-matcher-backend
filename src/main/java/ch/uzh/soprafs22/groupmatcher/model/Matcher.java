@@ -58,11 +58,11 @@ public class Matcher {
     private List<Team> teams = new ArrayList<>();
 
     public boolean isPublished() {
-        return publishDate.isAfter(ZonedDateTime.now());
+        return publishDate.isBefore(ZonedDateTime.now());
     }
 
     public boolean isPastDue() {
-        return dueDate.isAfter(ZonedDateTime.now());
+        return dueDate.isBefore(ZonedDateTime.now());
     }
 
 }

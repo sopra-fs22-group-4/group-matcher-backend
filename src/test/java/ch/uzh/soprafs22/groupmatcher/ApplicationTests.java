@@ -15,7 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -25,8 +25,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest
-@TestPropertySource(properties = {"db-scheduler.enabled=true"})
+@SpringBootTest(properties = {"db-scheduler.enabled=true"})
+@Transactional
 class ApplicationTests {
 
     @Autowired
@@ -59,7 +59,7 @@ class ApplicationTests {
     void adminIntegrationTest() {
         UserDTO testUserDTO = new UserDTO();
         testUserDTO.setName("Test Admin");
-        testUserDTO.setEmail("test@email.com");
+        testUserDTO.setEmail("test-admin@email.com");
         testUserDTO.setPassword("test");
         Long createdAdminId = adminController.createAdmin(testUserDTO);
         Admin storedAdmin = adminController.verifyAccount(createdAdminId);
