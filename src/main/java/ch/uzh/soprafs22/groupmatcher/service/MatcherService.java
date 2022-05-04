@@ -1,17 +1,16 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
+import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.*;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherOverview;
-import ch.uzh.soprafs22.groupmatcher.model.projections.StudentOverview;
-import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import ch.uzh.soprafs22.groupmatcher.repository.AnswerRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.TeamRepository;
+import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -36,38 +35,32 @@ public class MatcherService {
 
     private TeamRepository teamRepository;
 
+    public Student getStudent(Long matcherId, String studentEmail) {
+        return studentRepository.getByMatcherIdAndEmail(matcherId, studentEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid email address"));
+    }
+
     public MatcherOverview getMatcherOverview(Long matcherId) {
         return matcherRepository.findMatcherById(matcherId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     }
 
-    public StudentOverview verifyStudentEmail(Long matcherId, String studentEmail) {
-        return studentRepository.findByMatcherIdAndEmail(matcherId, studentEmail)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid email address"));
-    }
-
-    public Student submitStudentAnswers(Long matcherId, String studentEmail, List<Long> answerIds) {
-        Student student = studentRepository.getByMatcherIdAndEmail(matcherId, studentEmail)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid email address"));
-        List<Answer> quizAnswers = answerIds.stream().map(answerId -> // Verify the answer belongs to the student's matcher
-                answerRepository.findByIdAndQuestion_Matcher_Id(answerId, matcherId)
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid answer ID"))).toList();
-        student.setAnswers(quizAnswers);
-        student.setSubmissionTimestamp(now());
+    public Student findMatcherStudent(Long matcherId, UserDTO studentDTO) {
+        Student student = getStudent(matcherId, studentDTO.getEmail());
+        if (!Strings.isNullOrEmpty(studentDTO.getName()))
+            student.setName(studentDTO.getName());
         return studentRepository.save(student);
     }
 
-    public void addNewStudents(Long matcherId, Set<Student> students) {
-        Matcher storedMatcher = matcherRepository.findById(matcherId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No account found for the given ID"));
-        storedMatcher.getStudents().addAll(students);
-        matcherRepository.save(storedMatcher);
-    }
-
-    public List<Submission> getLatestSubmissionsByMatcherId(Long matcherId) {
-        return studentRepository.findByMatcher_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(
-                matcherId, Pageable.ofSize(10));
+    public Student submitStudentAnswers(Long matcherId, String studentEmail, List<Long> answerIds) {
+        Student student = getStudent(matcherId, studentEmail);
+        List<Answer> quizAnswers = answerRepository.findByIdInAndQuestion_Matcher_Id(answerIds, matcherId);
+        if (quizAnswers.size() != student.getMatcher().getQuestions().size())
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Please provide valid answers to all quiz questions");
+        student.setSelectedAnswers(quizAnswers);
+        student.setSubmissionTimestamp(now());
+        return studentRepository.save(student);
     }
 
     private Map.Entry<Set<Long>, Double> createTeamEntry(Set<Long> teamIds, List<Question> questions) {

@@ -1,11 +1,11 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
+import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Question;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
-import ch.uzh.soprafs22.groupmatcher.model.projections.StudentOverview;
 import ch.uzh.soprafs22.groupmatcher.repository.AnswerRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -55,19 +54,18 @@ class MatcherServiceTest {
     public void setup() {
         testMatcher = new Matcher();
         testMatcher.setId(1L);
+        testMatcher.setGroupSize(3);
         Question testQuestion = TestingUtils.createQuestion(2L, 1);
         testMatcher.setQuestions(List.of(testQuestion));
-        testStudent = TestingUtils.createStudent(null, 0);
+        testStudent = TestingUtils.createStudent(3L, 3);
         testStudent.setMatcher(testMatcher);
+        testMatcher.getStudents().add(testStudent);
         given(matcherRepository.save(any(Matcher.class))).willAnswer(returnsFirstArg());
         given(studentRepository.save(any(Student.class))).willAnswer(returnsFirstArg());
     }
 
     @Test
     void createTeams_successful() {
-        Matcher testMatcher = new Matcher();
-        testMatcher.setId(1L);
-        testMatcher.setGroupSize(3);
         Student student1 = TestingUtils.createStudent(11L,0);
         Student student2 = TestingUtils.createStudent(12L,1);
         Student student3 = TestingUtils.createStudent(13L,2);
@@ -146,53 +144,46 @@ class MatcherServiceTest {
     }
 
     @Test
-    void checkStudentEmail_valid() {
-        StudentOverview studentOverview = TestingUtils.convertToOverview(testStudent);
-        given(studentRepository.findByMatcherIdAndEmail(testMatcher.getId(), testStudent.getEmail())).willReturn(Optional.of(studentOverview));
-        StudentOverview storedStudentOverview = matcherService.verifyStudentEmail(testMatcher.getId(), testStudent.getEmail());
-        assertEquals(studentOverview, storedStudentOverview);
+    void findStudent_valid() {
+        UserDTO testStudentDTO = new UserDTO();
+        testStudentDTO.setName("Test Student");
+        testStudentDTO.setEmail(testStudent.getEmail());
+        given(studentRepository.getByMatcherIdAndEmail(testMatcher.getId(), testStudent.getEmail())).willReturn(Optional.of(testStudent));
+        Student storedStudent = matcherService.findMatcherStudent(testMatcher.getId(), testStudentDTO);
+        assertEquals(testStudentDTO.getName(), storedStudent.getName());
+        assertEquals(testStudentDTO.getEmail(), storedStudent.getEmail());
     }
 
     @Test
-    void checkStudentEmail_invalid() {
+    void findStudent_invalid() {
+        UserDTO testStudentDTO = new UserDTO();
+        testStudentDTO.setName("Test Student");
+        testStudentDTO.setEmail(testStudent.getEmail());
         Long matcherId = testMatcher.getId();
         given(studentRepository.findByMatcherIdAndEmail(matcherId, testStudent.getEmail())).willReturn(Optional.empty());
-        assertThrows(ResponseStatusException.class, () -> matcherService.verifyStudentEmail(matcherId, "test@email.com"));
+        assertThrows(ResponseStatusException.class, () -> matcherService.findMatcherStudent(matcherId, testStudentDTO));
     }
 
     @Test
     void submitStudentAnswers_valid(){
         Answer testAnswer = testMatcher.getQuestions().get(0).getAnswers().get(0);
-        testAnswer.setId(3L);
+        testAnswer.setId(4L);
         given(studentRepository.getByMatcherIdAndEmail(testMatcher.getId(), testStudent.getEmail())).willReturn(Optional.of(testStudent));
-        given(answerRepository.findByIdAndQuestion_Matcher_Id(testAnswer.getId(), testMatcher.getId())).willReturn(Optional.of(testAnswer));
-        assertTrue(testStudent.getAnswers().isEmpty());
+        given(answerRepository.findByIdInAndQuestion_Matcher_Id(List.of(testAnswer.getId()), testMatcher.getId()))
+                .willReturn(List.of(testAnswer));
+        assertTrue(testStudent.getSelectedAnswers().isEmpty());
         Student storedStudent = matcherService.submitStudentAnswers(testMatcher.getId(), testStudent.getEmail(), List.of(testAnswer.getId()));
-        assertEquals(List.of(testAnswer), storedStudent.getAnswers());
+        assertEquals(List.of(testAnswer), storedStudent.getSelectedAnswers());
     }
 
     @Test
     void submitStudentAnswers_invalid(){
         Answer testAnswer = testMatcher.getQuestions().get(0).getAnswers().get(0);
-        testAnswer.setId(3L);
+        testAnswer.setId(4L);
         List<Long> answerIds = List.of(testAnswer.getId());
         Long matcherId = testMatcher.getId();
         String studentEmail = testStudent.getEmail();
-        given(answerRepository.findByIdAndQuestion_Matcher_Id(testAnswer.getId(), testMatcher.getId())).willReturn(Optional.empty());
+        given(answerRepository.findByIdInAndQuestion_Matcher_Id(answerIds, testMatcher.getId())).willReturn(List.of());
         assertThrows(ResponseStatusException.class,() -> matcherService.submitStudentAnswers(matcherId, studentEmail, answerIds));
-    }
-
-    @Test
-    void addNewStudents_valid(){
-        Long matcherId = testMatcher.getId();
-        Student student1 = TestingUtils.createStudent(11L,0);
-        Student student2 = TestingUtils.createStudent(12L,1);
-        Set<Student> testStudents = Set.of(student1,student2);
-
-        given(matcherRepository.findById(anyLong())).willReturn(Optional.of(testMatcher));
-
-        matcherService.addNewStudents(matcherId, testStudents);
-
-        assertEquals(testStudents, testMatcher.getStudents());
     }
 }

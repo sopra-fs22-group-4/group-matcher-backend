@@ -1,16 +1,14 @@
 package ch.uzh.soprafs22.groupmatcher.controller;
 
-import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherOverview;
-import ch.uzh.soprafs22.groupmatcher.model.projections.StudentOverview;
+import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
-import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
+import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherOverview;
 import ch.uzh.soprafs22.groupmatcher.service.MatcherService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Set;
 
 @AllArgsConstructor
 @RestController
@@ -18,29 +16,20 @@ import java.util.Set;
 public class MatcherController {
 
     private MatcherService matcherService;
+
     @GetMapping("/{matcherId}")
     public MatcherOverview getMatcherOverview(@PathVariable Long matcherId) {
         return matcherService.getMatcherOverview(matcherId);
     }
 
-    @GetMapping("/{matcherId}/students/{studentEmail}")
-    public StudentOverview verifyStudentEmail(@PathVariable Long matcherId, @PathVariable String studentEmail) {
-        return matcherService.verifyStudentEmail(matcherId, studentEmail);
-    }
-
-    @GetMapping("/{matcherId}/submissions/latest")
-    public List<Submission> getLatestSubmissions(@PathVariable Long matcherId) {
-        return matcherService.getLatestSubmissionsByMatcherId(matcherId);
+    @PostMapping("/{matcherId}/students")
+    public Student findStudent(@PathVariable Long matcherId, @RequestBody UserDTO student) {
+        return matcherService.findMatcherStudent(matcherId, student);
     }
 
     @PutMapping("/{matcherId}/students/{studentEmail}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void submitStudentAnswers(@PathVariable Long matcherId, @PathVariable String studentEmail, @RequestBody List<Long> answerIds) {
         matcherService.submitStudentAnswers(matcherId, studentEmail, answerIds);
-    }
-
-    @PostMapping("/{matcherId}/students")
-    public void addStudents(@PathVariable Long matcherId, @RequestBody Set<Student> students){
-        matcherService.addNewStudents(matcherId, students);
     }
 }

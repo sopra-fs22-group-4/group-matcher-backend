@@ -1,8 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.model;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,7 +11,6 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Answer {
     @Id
     @GeneratedValue
@@ -29,7 +26,7 @@ public class Answer {
     private Question question;
 
     @JsonIgnore
-    @ManyToMany(mappedBy = "answers", cascade = CascadeType.ALL)
+    @ManyToMany(mappedBy = "selectedAnswers", cascade = CascadeType.ALL)
     private List<Student> students = new ArrayList<>();
 
 }

@@ -1,8 +1,8 @@
 package ch.uzh.soprafs22.groupmatcher.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,7 +14,6 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Student {
     @Id
     @GeneratedValue
@@ -25,10 +24,12 @@ public class Student {
 
     private String name;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "matcher_id")
     private Matcher matcher;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "team_id")
     private Team team;
@@ -41,6 +42,11 @@ public class Student {
             joinColumns = @JoinColumn(name = "student_id"),
             inverseJoinColumns = @JoinColumn(name = "answers_id"))
     @OrderBy("question.id")
-    private List<Answer> answers = new ArrayList<>();
+    private List<Answer> selectedAnswers = new ArrayList<>();
+
+    @JsonProperty("questions")
+    public List<Question> getQuestions() {
+        return matcher.getQuestions();
+    }
 
 }

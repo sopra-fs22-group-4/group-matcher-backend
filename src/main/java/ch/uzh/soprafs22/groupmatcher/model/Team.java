@@ -1,7 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.model;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,7 +11,6 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Team {
     @Id
     @GeneratedValue
@@ -24,6 +22,7 @@ public class Team {
 
     private Double skillScore;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "matcher_id")
     private Matcher matcher;

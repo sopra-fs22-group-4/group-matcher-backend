@@ -1,12 +1,15 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
+import ch.uzh.soprafs22.groupmatcher.TestingUtils;
 import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
+import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
+import ch.uzh.soprafs22.groupmatcher.dto.QuestionDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
-import ch.uzh.soprafs22.groupmatcher.model.Admin;
-import ch.uzh.soprafs22.groupmatcher.model.Matcher;
+import ch.uzh.soprafs22.groupmatcher.model.*;
 import ch.uzh.soprafs22.groupmatcher.repository.AdminRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
+import ch.uzh.soprafs22.groupmatcher.repository.QuestionRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +18,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,6 +36,9 @@ class AdminServiceTest {
 
     @MockBean
     private MatcherRepository matcherRepository;
+
+    @MockBean
+    private QuestionRepository questionRepository;
 
     @MockBean
     private StudentRepository studentRepository;
@@ -123,5 +132,45 @@ class AdminServiceTest {
         verify(matcherRepository, times(1)).save(any());
         assertEquals(testMatcherDTO.getGroupSize(), createdMatcher.getGroupSize());
         assertEquals(MatchingStrategy.MOST_SIMILAR, createdMatcher.getMatchingStrategy());
+    }
+
+    @Test
+    void addNewStudents_valid(){
+        Matcher testMatcher = new Matcher();
+        testMatcher.setId(1L);
+        testMatcher.getAdmins().add(testAdmin);
+        Student testStudent = TestingUtils.createStudent(3L, 3);
+        testStudent.setMatcher(testMatcher);
+        testMatcher.getStudents().add(testStudent);
+        List<String> testStudents = List.of("new-student-1@test.com", "new-student-2@test.com");
+        given(matcherRepository.findById(testMatcher.getId())).willReturn(Optional.of(testMatcher));
+        given(studentRepository.existsByMatcherIdAndEmail(anyLong(), anyString())).willReturn(false);
+        assertEquals(1, testMatcher.getStudents().size());
+        Matcher storedMatcher = adminService.addNewStudents(testAdmin.getId(), testMatcher.getId(), testStudents);
+        assertEquals(3, storedMatcher.getStudents().size());
+    }
+
+    @Test
+    void createQuestion_success() {
+        QuestionDTO testQuestionDTO = new QuestionDTO();
+        testQuestionDTO.setContent("Test Question");
+        testQuestionDTO.setQuestionType(QuestionType.SINGLE_CHOICE);
+        testQuestionDTO.setAnswers(List.of("Test Answer"));
+        Matcher testMatcher = new Matcher();
+        testMatcher.setId(1L);
+        testMatcher.setPublishDate(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
+        testMatcher.getAdmins().add(testAdmin);
+        given(matcherRepository.findById(testMatcher.getId())).willReturn(Optional.of(testMatcher));
+        assertTrue(testMatcher.getQuestions().isEmpty());
+        Matcher storedMatcher = adminService.createQuestion(testAdmin.getId(), testMatcher.getId(), testQuestionDTO);
+        assertEquals(1, testMatcher.getQuestions().size());
+        assertEquals(testMatcher.getId(), storedMatcher.getQuestions().get(0).getMatcher().getId());
+        assertEquals(testQuestionDTO.getContent()+"?", storedMatcher.getQuestions().get(0).getContent());
+        assertEquals(testQuestionDTO.getQuestionType(), storedMatcher.getQuestions().get(0).getQuestionType());
+        assertEquals(testQuestionDTO.getWeight(), storedMatcher.getQuestions().get(0).getWeight());
+        assertEquals(testQuestionDTO.getAnswers(), storedMatcher.getQuestions().get(0).getAnswers()
+                .stream().map(Answer::getContent).toList());
+
+
     }
 }

@@ -10,7 +10,6 @@ import java.time.ZonedDateTime;
 public class MatcherDTO {
     private String description;
     private String university;
-    private String semester;
     private String courseName;
     private ZonedDateTime publishDate;
     private ZonedDateTime dueDate;

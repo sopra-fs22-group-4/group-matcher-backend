@@ -1,7 +1,9 @@
 package ch.uzh.soprafs22.groupmatcher.controller;
 
+import ch.uzh.soprafs22.groupmatcher.TestingUtils;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
+import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.service.AdminService;
 import ch.uzh.soprafs22.groupmatcher.service.EmailService;
 import com.google.gson.Gson;
@@ -15,10 +17,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -35,18 +36,17 @@ class AdminControllerTest {
     private EmailService emailService;
 
     private UserDTO testUserDTO;
-
     private Admin testAdmin;
+    private Matcher testMatcher;
 
     @BeforeEach
     public void setup() {
+        testAdmin = TestingUtils.createAdmin(1L);
         testUserDTO = new UserDTO();
-        testUserDTO.setEmail("test@email.com");
-        testUserDTO.setPassword("test");
-        testAdmin = new Admin();
-        testAdmin.setId(1L);
-        testAdmin.setEmail(testUserDTO.getEmail());
-        testAdmin.setPassword(testUserDTO.getPassword());
+        testUserDTO.setEmail(testAdmin.getEmail());
+        testUserDTO.setPassword(testAdmin.getPassword());
+        testMatcher = new Matcher();
+        testMatcher.setId(2L);
     }
 
     @Test
@@ -56,7 +56,6 @@ class AdminControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(new Gson().toJson(testUserDTO)))
                 .andExpect(status().isCreated());
-        verify(emailService, times(1)).sendAccountVerificationEmail(testUserDTO.getEmail());
     }
 
     @Test
@@ -72,4 +71,25 @@ class AdminControllerTest {
                 .andExpect(jsonPath("$.verified", is(testAdmin.isVerified())));
     }
 
+    @Test
+    void getMatcher_successful() throws Exception {
+        given(adminService.getMatcherById(anyLong(),anyLong())).willReturn(testMatcher);
+        mockMvc.perform(get("/admins/{adminId}/matchers/{matcherId}",
+                        testAdmin.getId(),testMatcher.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id", is(testMatcher.getId().intValue())))
+                .andExpect(jsonPath("$.university", is(testMatcher.getUniversity())))
+                .andExpect(jsonPath("$.courseName", is(testMatcher.getCourseName())));
+    }
+
+    @Test
+    void updateStudentToMatcher_successful() throws Exception {
+        testAdmin.setVerified(true);
+        given(adminService.verifyAccount(anyLong())).willReturn(testAdmin);
+        mockMvc.perform(put("/admins/{adminId}/verify", testAdmin.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(testAdmin.getId().intValue())))
+                .andExpect(jsonPath("$.verified", is(testAdmin.isVerified())));
+    }
 }

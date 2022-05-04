@@ -22,7 +22,7 @@ public class EmailScheduler {
                 .recurring("check-scheduled-emails", fixedDelay(Duration.ofMinutes(1)))
                 .execute((taskInstance, executionContext) -> {
                     log.info("Checking if there are emails scheduled for {}", now());
-                    emailService.sendEmailsScheduledForNow();
+                    emailService.activatePublishedMatchers();
                 });
     }
 }

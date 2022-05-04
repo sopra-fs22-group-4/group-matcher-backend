@@ -1,10 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.model;
 
 import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
@@ -19,7 +16,6 @@ import java.util.Set;
 @Getter
 @Setter
 @Entity
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Matcher {
     @Id
     @GeneratedValue
@@ -28,8 +24,6 @@ public class Matcher {
     private String description;
 
     private String university;
-
-    private String semester;
 
     private String courseName;
 
@@ -45,12 +39,10 @@ public class Matcher {
 
     private Integer groupSize;
 
+    private boolean active = false;
+
     @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
     private List<Question> questions = new ArrayList<>();
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
-    private List<Email> emails = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "matcher_admins",
@@ -61,12 +53,16 @@ public class Matcher {
     @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
     private Set<Student> students = new LinkedHashSet<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
     private List<Team> teams = new ArrayList<>();
 
-    @JsonProperty("active")
-    public boolean isActive() {
-        return dueDate.isAfter(ZonedDateTime.now());
+    public boolean isPublished() {
+        return publishDate.isBefore(ZonedDateTime.now());
+    }
+
+    public boolean isPastDue() {
+        return dueDate.isBefore(ZonedDateTime.now());
     }
 
 }

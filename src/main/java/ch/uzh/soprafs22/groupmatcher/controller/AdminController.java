@@ -1,9 +1,11 @@
 package ch.uzh.soprafs22.groupmatcher.controller;
 
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
+import ch.uzh.soprafs22.groupmatcher.dto.QuestionDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
+import ch.uzh.soprafs22.groupmatcher.model.Question;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherAdminOverview;
 import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import ch.uzh.soprafs22.groupmatcher.service.AdminService;
@@ -24,9 +26,10 @@ public class AdminController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createAdmin(@RequestBody UserDTO newAdmin) {
-        adminService.createAdmin(newAdmin);
-        emailService.sendAccountVerificationEmail(newAdmin.getEmail());
+    public Long createAdmin(@RequestBody UserDTO newAdmin) {
+        Admin createdAdmin = adminService.createAdmin(newAdmin);
+//        emailService.sendAccountVerificationEmail(createdAdmin);
+        return createdAdmin.getId();
     }
 
     @PostMapping("/login")
@@ -41,8 +44,9 @@ public class AdminController {
 
     @PostMapping("/admins/{adminId}/matchers")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createMatcher(@PathVariable Long adminId, @RequestBody MatcherDTO newMatcher) {
-        adminService.createMatcher(adminId, newMatcher);
+    public Long createMatcher(@PathVariable Long adminId, @RequestBody MatcherDTO newMatcher) {
+        Matcher createdMatcher = adminService.createMatcher(adminId, newMatcher);
+        return createdMatcher.getId();
     }
 
     @GetMapping("/admins/{adminId}/matchers")
@@ -58,5 +62,30 @@ public class AdminController {
     @GetMapping("/admins/{adminId}/matchers/{matcherId}")
     public Matcher getMatcher(@PathVariable Long adminId, @PathVariable Long matcherId) {
         return adminService.getMatcherById(adminId, matcherId);
+    }
+
+    @PutMapping("/admins/{adminId}/matchers/{matcherId}")
+    public Matcher updateMatcher(@PathVariable Long adminId, @PathVariable Long matcherId, @RequestBody MatcherDTO updatedMatcher) {
+        return adminService.updateMatcher(adminId, matcherId, updatedMatcher);
+    }
+
+    @PostMapping("/admins/{adminId}/matchers/{matcherId}/questions")
+    public Matcher createQuestion(@PathVariable Long adminId, @PathVariable Long matcherId, @RequestBody QuestionDTO newQuestion) {
+        return adminService.createQuestion(adminId, matcherId, newQuestion);
+    }
+
+    @GetMapping("/admins/{adminId}/matchers/{matcherId}/submissions/latest")
+    public List<Submission> getLatestSubmissions(@PathVariable Long adminId, @PathVariable Long matcherId) {
+        return adminService.getLatestSubmissionsByMatcherId(adminId, matcherId);
+    }
+
+    @PostMapping("/admins/{adminId}/matchers/{matcherId}/students")
+    public Matcher addStudents(@PathVariable Long adminId, @PathVariable Long matcherId, @RequestBody List<String> studentEmails){
+        return adminService.addNewStudents(adminId, matcherId, studentEmails);
+    }
+
+    @PutMapping("/admins/{adminId}/questions/{questionId}")
+    public Question updateQuestion(@PathVariable Long adminId, @PathVariable Long questionId, @RequestBody QuestionDTO updatedQuestion) {
+        return adminService.updateQuestion(adminId, questionId, updatedQuestion);
     }
 }

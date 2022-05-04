@@ -1,9 +1,11 @@
 package ch.uzh.soprafs22.groupmatcher.controller;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
+import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
 import ch.uzh.soprafs22.groupmatcher.service.MatcherService;
+import com.google.gson.Gson;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,8 +15,12 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
+import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(MatcherController.class)
@@ -31,18 +37,39 @@ class MatcherControllerTest {
 
     @BeforeEach
     public void setup() {
-        testMatcher = new Matcher();
-        testMatcher.setId(1L);
-        testStudent = TestingUtils.createStudent(null, null);
+        testMatcher = TestingUtils.createMatcher(1L);
+        testStudent = TestingUtils.createStudent(2L, 2);
     }
 
     @SneakyThrows
     @Test
     void checkValidStudent(){
-        given(matcherService.verifyStudentEmail(testMatcher.getId(), testStudent.getEmail())).willReturn(TestingUtils.convertToOverview(testStudent));
-        mockMvc.perform(get("/matchers/{matcherId}/students/{studentEmail}}",
+        UserDTO testStudentDTO = new UserDTO();
+        testStudentDTO.setName("Test Student");
+        testStudentDTO.setEmail(testStudent.getEmail());
+        given(matcherService.findMatcherStudent(testMatcher.getId(), testStudentDTO)).willReturn(testStudent);
+        mockMvc.perform(post("/matchers/{matcherId}/students", testMatcher.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new Gson().toJson(testStudentDTO)))
+                .andExpect(jsonPath("$.id", is(testStudent.getId().intValue())));
+    }
+
+    @SneakyThrows
+    @Test
+    void submitStudentAnswers(){
+        mockMvc.perform(put("/matchers/{matcherId}/students/{studentEmail}",
                         testMatcher.getId(), testStudent.getEmail())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new Gson().toJson(List.of(1L, 2L))))
+                .andExpect(status().isNoContent());
+    }
+
+    @SneakyThrows
+    @Test
+    void getMatcherOverview(){
+        given(matcherService.getMatcherOverview(testMatcher.getId())).willReturn(TestingUtils.convertToOverview(testMatcher));
+        mockMvc.perform(get("/matchers/{matcherId}", testMatcher.getId())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(jsonPath("$.id", is(testMatcher.getId().intValue())));
     }
 }

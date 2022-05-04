@@ -20,7 +20,12 @@ public interface MatcherOverview {
 
     ZonedDateTime getDueDate();
 
-    @Value("#{target.active}")
     boolean isActive();
+
+    @Value("#{target.published}")
+    boolean isPublished();
+
+    @Value("#{target.pastDue}")
+    boolean isPastDue();
 
 }
