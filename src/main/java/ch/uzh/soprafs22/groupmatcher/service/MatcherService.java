@@ -1,5 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
+import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.*;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherOverview;
@@ -11,14 +12,12 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static java.time.ZonedDateTime.now;
 
@@ -92,4 +91,42 @@ public class MatcherService {
                 .forEach(teamEntry -> formTeam(matcher, teamEntry));
     }
 
+    public double[][] createAnswerMatrixAll(Long matcherId) {
+
+        double[][] studentAnswerMatrixSingle = createAnswerMatrixByQuestionType(matcherId, QuestionType.SINGLE_CHOICE);
+        double[][] studentAnswerMatrixMulti = createAnswerMatrixByQuestionType(matcherId, QuestionType.MULTIPLE_CHOICE);
+        double[][] studentAnswerMatrixAll = new double[studentAnswerMatrixSingle.length][];
+
+        for (int i = 0; i<studentAnswerMatrixSingle.length; i++) {
+            studentAnswerMatrixAll[i] = ArrayUtils.addAll(studentAnswerMatrixSingle[i], studentAnswerMatrixMulti[i]);
+        }
+        return studentAnswerMatrixAll;
+    }
+
+    public double[][] createAnswerMatrixByQuestionType(Long matcherId, QuestionType questionType) {
+
+        List<Long> studentIdListOrdered = studentRepository.getAllStudentsIdByMatcherId(matcherId);
+        int studentNumbers = studentIdListOrdered.size();
+
+        // stdIdListOrdered Q1-A1   Q1-A2   Q1-A3   Q2-A1   Q2-A2   Q2-A3   Q2-A4
+        // student1(0l)     1       0       1       0       1       0       1
+        // student2(1l)     0       0       1       0       1       0       0
+
+        List<Answer> answerList = answerRepository.findByQuestion_Matcher_IdAndQuestion_QuestionTypeOrderByIdAsc(matcherId,questionType);
+
+        double[] temp = new double[answerList.size()];
+        double[][] studentAnswerMatrix = new double[studentNumbers][answerList.size()];
+
+        for (int i = 0; i < studentIdListOrdered.size(); i++){
+            Optional<Student> student = studentRepository.findById(studentIdListOrdered.get(i));
+            for (int j = 0; j < answerList.size(); j++) {
+                if (student.isPresent()){
+                    temp[j] = studentRepository.existsByIdAndSelectedAnswers_Id(student.get().getId()
+                            ,answerList.get(j).getId()) ? 1 : 0;
+                }
+            }
+            studentAnswerMatrix[i] = temp;
+        }
+        return studentAnswerMatrix;
+    }
 }

@@ -39,4 +39,9 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     List<Submission> findByMatcher_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(Long matcherId, Pageable pageable);
 
     Integer countByMatcher_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(Long matcherId);
+
+    @Query("SELECT student.id FROM Student student WHERE student.matcher.id = :matcherId ORDER BY student.id")
+    List<Long> getAllStudentsIdByMatcherId(@Param("matcherId") Long matcherId);
+
+    boolean existsByIdAndSelectedAnswers_Id(Long studentId, Long answerId);
 }

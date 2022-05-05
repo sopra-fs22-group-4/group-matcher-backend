@@ -1,6 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
+import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
@@ -23,6 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static ch.uzh.soprafs22.groupmatcher.constant.QuestionType.SINGLE_CHOICE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.*;
@@ -185,5 +187,34 @@ class MatcherServiceTest {
         String studentEmail = testStudent.getEmail();
         given(answerRepository.findByIdInAndQuestion_Matcher_Id(answerIds, testMatcher.getId())).willReturn(List.of());
         assertThrows(ResponseStatusException.class,() -> matcherService.submitStudentAnswers(matcherId, studentEmail, answerIds));
+    }
+
+    @Test
+    void queryAnswerMatrix_successful() {
+
+        int numStudents = 3;
+        int numAnswers = 5;
+
+        Set<Student> testStudentSet = TestingUtils.createStudents(3);
+        List<Long> testStudentIdList = testStudentSet.stream().map(Student::getId).toList();
+        Question testQuestion = TestingUtils.createQuestion(1L, 5);
+
+        given(studentRepository.getAllStudentsIdByMatcherId(anyLong()))
+                .willReturn(testStudentIdList);
+        given(answerRepository.findByQuestion_Matcher_IdAndQuestion_QuestionTypeOrderByIdAsc(anyLong(),any(QuestionType.class)))
+                .willReturn(testQuestion.getAnswers());
+        given(studentRepository.findById(anyLong()))
+                .willReturn(testStudentSet.stream().findFirst());
+        given(studentRepository.existsByIdAndSelectedAnswers_Id(anyLong(),anyLong()))
+                .willReturn(true);
+
+        double[][] studentAnswerMatrix = matcherService.createAnswerMatrixByQuestionType(1L, SINGLE_CHOICE);
+        double[][] queryAnswerMatrixAll = matcherService.createAnswerMatrixAll(1L);
+
+        assertEquals(numStudents, studentAnswerMatrix.length);
+        assertEquals(numAnswers, studentAnswerMatrix[0].length);
+        assertEquals(numStudents, queryAnswerMatrixAll.length);
+        assertEquals(2*numAnswers, queryAnswerMatrixAll[0].length);
+
     }
 }
