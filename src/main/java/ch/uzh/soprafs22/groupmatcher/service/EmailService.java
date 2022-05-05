@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Set;
 
 @Slf4j
 @AllArgsConstructor
@@ -44,7 +43,7 @@ public class EmailService {
                         student.getName(), student.getMatcher().getId(), student.getId()), student.getEmail()));
     }
 
-    public String[] mapToRecipients(Set<Student> students) {
+    public String[] mapToRecipients(List<Student> students) {
         return students.stream().map(Student::getEmail).toArray(String[]::new);
     }
 

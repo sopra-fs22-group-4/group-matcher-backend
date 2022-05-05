@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.IntStream;
 
 @Slf4j
@@ -63,7 +62,7 @@ public class AdminService {
         Admin storedAdmin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No account found for the given ID"));
         Matcher newMatcher = new ModelMapper().map(matcherDTO, Matcher.class);
-        newMatcher.setAdmins(Set.of(storedAdmin));
+        newMatcher.getAdmins().add(storedAdmin);
         return matcherRepository.save(newMatcher);
     }
 

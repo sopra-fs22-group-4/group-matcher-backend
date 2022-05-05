@@ -9,9 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import javax.persistence.*;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -48,10 +46,10 @@ public class Matcher {
     @JoinTable(name = "matcher_admins",
             joinColumns = @JoinColumn(name = "matcher_id"),
             inverseJoinColumns = @JoinColumn(name = "admins_id"))
-    private Set<Admin> admins = new LinkedHashSet<>();
+    private List<Admin> admins = new ArrayList<>();
 
     @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
-    private Set<Student> students = new LinkedHashSet<>();
+    private List<Student> students = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
