@@ -39,6 +39,10 @@ public class MatcherService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid email address"));
     }
 
+    public String[] getStudentEmails(Long matcherId) {
+        return studentRepository.getAllStudentsEmailByMatcherId(matcherId);
+    }
+
     public MatcherOverview getMatcherOverview(Long matcherId) {
         return matcherRepository.findMatcherById(matcherId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
