@@ -36,7 +36,7 @@ class ApplicationTests {
     Scheduler scheduler;
 
     @Autowired
-    Task<Void> checkScheduledEmailsTask;
+    Task<Void> activateScheduledMatchersTask;
 
     @MockBean
     JavaMailSender mailSender;
@@ -49,10 +49,10 @@ class ApplicationTests {
 
     @Test
     void initEmailsTaskTest() {
-        assertEquals(1, context.getBeansOfType(RecurringTask.class).size());
+        assertEquals(2, context.getBeansOfType(RecurringTask.class).size());
         assertTrue(scheduler.getSchedulerState().isStarted());
         assertTrue(scheduler.getCurrentlyExecuting().isEmpty());
-        scheduler.schedule(checkScheduledEmailsTask.instance("1"), Instant.now());
+        scheduler.schedule(activateScheduledMatchersTask.instance("1"), Instant.now());
     }
 
     @Test

@@ -47,8 +47,8 @@ public class EmailService {
         return students.stream().map(Student::getEmail).toArray(String[]::new);
     }
 
-    public List<Matcher> activatePublishedMatchers() {
-        return matcherRepository.findByPublishDateIsAfterAndActiveFalse(ZonedDateTime.now()).stream().map(matcher -> {
+    public List<Matcher> activateScheduledMatchers() {
+        return matcherRepository.findByPublishDateIsBeforeAndActiveFalse(ZonedDateTime.now()).stream().map(matcher -> {
             mailSender.send(composeMessage("Link to Matching Quiz",
                     "Hi student!%nFill out the quiz: https://group-matcher.herokuapp.com/matchers/%s".formatted(matcher.getId()),
                     mapToRecipients(matcher.getStudents())));

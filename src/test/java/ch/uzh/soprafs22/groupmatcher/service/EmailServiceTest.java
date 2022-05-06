@@ -42,9 +42,9 @@ class EmailServiceTest {
     void activatePublishedMatchersTest() {
         Matcher testMatcher = TestingUtils.createMatcher();
         given(matcherRepository.save(any())).willAnswer(returnsFirstArg());
-        given(matcherRepository.findByPublishDateIsAfterAndActiveFalse(any())).willReturn(List.of(testMatcher));
+        given(matcherRepository.findByPublishDateIsBeforeAndActiveFalse(any())).willReturn(List.of(testMatcher));
         assertFalse(testMatcher.isActive());
-        List<Matcher> activatedMatchers = emailService.activatePublishedMatchers();
+        List<Matcher> activatedMatchers = emailService.activateScheduledMatchers();
         verify(mailSender).send(messageCaptor.capture());
         SimpleMailMessage sentEmail = messageCaptor.getValue();
         assertEquals("Link to Matching Quiz", sentEmail.getSubject());

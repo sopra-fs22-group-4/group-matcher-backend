@@ -4,17 +4,34 @@ import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
+import ch.uzh.soprafs22.groupmatcher.model.Team;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherOverview;
 import ch.uzh.soprafs22.groupmatcher.repository.AnswerRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
 import com.google.common.base.Strings;
+import de.lmu.ifi.dbs.elki.algorithm.clustering.kmeans.initialization.KMeansInitialization;
+import de.lmu.ifi.dbs.elki.algorithm.clustering.kmeans.initialization.RandomUniformGeneratedInitialMeans;
+import de.lmu.ifi.dbs.elki.data.Clustering;
+import de.lmu.ifi.dbs.elki.data.NumberVector;
+import de.lmu.ifi.dbs.elki.data.model.MeanModel;
+import de.lmu.ifi.dbs.elki.data.type.TypeUtil;
+import de.lmu.ifi.dbs.elki.database.Database;
+import de.lmu.ifi.dbs.elki.database.StaticArrayDatabase;
+import de.lmu.ifi.dbs.elki.database.ids.DBIDIter;
+import de.lmu.ifi.dbs.elki.database.relation.Relation;
+import de.lmu.ifi.dbs.elki.datasource.ArrayAdapterDatabaseConnection;
+import de.lmu.ifi.dbs.elki.datasource.DatabaseConnection;
+import de.lmu.ifi.dbs.elki.distance.distancefunction.minkowski.EuclideanDistanceFunction;
+import de.lmu.ifi.dbs.elki.utilities.random.RandomFactory;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import tutorial.clustering.SameSizeKMeansAlgorithm;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import static java.time.ZonedDateTime.now;
@@ -58,10 +75,42 @@ public class MatcherService {
         return studentRepository.save(student);
     }
 
-    public double[][] createAnswerMatrixAll(Long matcherId) {
-        Matcher matcher = matcherRepository.findById(matcherId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No matcher found for the given ID"));
-        List<Long> answersIds = matcher.getQuestions().stream().flatMap(question -> question.getAnswers().stream().map(Answer::getId)).toList();
+    public List<Matcher> initMatching() {
+        return matcherRepository.findByDueDateIsAfterAndTeams_Empty(ZonedDateTime.now())
+                .stream().map(this::runMostSimilarModel).toList();
+    }
+
+    public Matcher runMostSimilarModel(Matcher matcher) {
+        double[][] answerMatrix = buildAnswersMatrixForMatcher(matcher);
+        String[] studentEmails = matcher.getStudents().stream().map(Student::getEmail).toArray(String[]::new);
+
+        DatabaseConnection databaseConnection = new ArrayAdapterDatabaseConnection(answerMatrix, studentEmails);
+        Database database = new StaticArrayDatabase(databaseConnection);
+        database.initialize();
+        Relation<NumberVector> dataColumn = database.getRelation(TypeUtil.NUMBER_VECTOR_FIELD);
+        Relation<String> emailsColumn = database.getRelation(TypeUtil.STRING);
+        KMeansInitialization initializer = new RandomUniformGeneratedInitialMeans(new RandomFactory(0));
+        SameSizeKMeansAlgorithm<NumberVector> model = new SameSizeKMeansAlgorithm<>(
+                EuclideanDistanceFunction.STATIC, matcher.getGroupSize(), -1, initializer);
+
+        Clustering<MeanModel> matcherModel = model.run(database, dataColumn);
+        matcherModel.getAllClusters().forEach(matchedTeam -> {
+            Team newTeam = new Team();
+            newTeam.setMatcher(matcher);
+            for (DBIDIter student = matchedTeam.getIDs().iter(); student.valid(); student.advance()) {
+                String studentEmail = emailsColumn.get(student);
+                Student storedStudent = getStudent(matcher.getId(), studentEmail);
+                newTeam.getStudents().add(storedStudent);
+                storedStudent.setTeam(newTeam);
+            }
+            matcher.getTeams().add(newTeam);
+        });
+        return matcherRepository.save(matcher);
+    }
+
+    public double[][] buildAnswersMatrixForMatcher(Matcher matcher) {
+        List<Long> answersIds = matcher.getQuestions().stream().flatMap(question ->
+                question.getAnswers().stream().map(Answer::getId)).toList();
 
         return matcher.getStudents().stream().map(student ->
                 answersIds.stream().map(answerId -> student.getSelectedAnswers()

@@ -4,7 +4,6 @@ import ch.uzh.soprafs22.groupmatcher.TestingUtils;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
-import ch.uzh.soprafs22.groupmatcher.model.projections.StudentOverview;
 import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +14,8 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
@@ -40,22 +40,6 @@ class StudentRepositoryTest {
     void setup() {
         testMatcher = new Matcher();
         testMatcher.getStudents().add(TestingUtils.createStudent(null, testMatcher));
-    }
-
-    @Test
-    void findByMatcherIdAndStudentsEmail_successful() {
-        Matcher storedMatcher = matcherRepository.save(testMatcher);
-        storedMatcher.getStudents().forEach(
-                student -> assertTrue(studentRepository.findByMatcherIdAndEmail(
-                        storedMatcher.getId(),student.getEmail()).isPresent()));
-    }
-
-    @Test
-    void findByMatcherIdAndStudentsEmail_failed() {
-        Matcher storedMatcher = matcherRepository.save(testMatcher);
-        Optional<StudentOverview> searchedStudent = studentRepository.findByMatcherIdAndEmail(
-                storedMatcher.getId(), "test@email.com");
-        assertTrue(searchedStudent.isEmpty());
     }
 
     @Test

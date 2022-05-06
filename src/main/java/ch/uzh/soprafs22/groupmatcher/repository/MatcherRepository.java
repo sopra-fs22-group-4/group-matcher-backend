@@ -15,5 +15,7 @@ public interface MatcherRepository extends JpaRepository<Matcher, Long> {
 
     List<MatcherAdminOverview> findByAdmins_IdOrderByDueDateDesc(Long adminId);
 
-    List<Matcher> findByPublishDateIsAfterAndActiveFalse(ZonedDateTime sendAt);
+    List<Matcher> findByPublishDateIsBeforeAndActiveFalse(ZonedDateTime sendAt);
+
+    List<Matcher> findByDueDateIsAfterAndTeams_Empty(ZonedDateTime dueAt);
 }
