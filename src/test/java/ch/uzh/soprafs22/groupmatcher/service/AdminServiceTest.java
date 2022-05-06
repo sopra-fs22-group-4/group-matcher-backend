@@ -52,13 +52,8 @@ class AdminServiceTest {
 
     @BeforeEach
     public void setup() {
-        testUserDTO = new UserDTO();
-        testUserDTO.setEmail("test@email.com");
-        testUserDTO.setPassword("test");
-        testAdmin = new Admin();
-        testAdmin.setId(1L);
-        testAdmin.setEmail(testUserDTO.getEmail());
-        testAdmin.setPassword(testUserDTO.getPassword());
+        testAdmin = TestingUtils.createAdmin();
+        testUserDTO = TestingUtils.convertToDTO(testAdmin);
         given(adminRepository.save(any(Admin.class))).willAnswer(returnsFirstArg());
         given(matcherRepository.save(any(Matcher.class))).willAnswer(returnsFirstArg());
     }
@@ -126,7 +121,12 @@ class AdminServiceTest {
     @Test
     void createMatcher_successful() {
         MatcherDTO testMatcherDTO = new MatcherDTO();
-        testMatcherDTO.setGroupSize(5);
+        testMatcherDTO.setCourseName("Test Course");
+        testMatcherDTO.setUniversity("Test University");
+        testMatcherDTO.setDescription("Test Description");
+        testMatcherDTO.setPublishDate(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
+        testMatcherDTO.setDueDate(ZonedDateTime.now().plus(7, ChronoUnit.DAYS));
+        testMatcherDTO.setGroupSize(3);
         given(adminRepository.findById(testAdmin.getId())).willReturn(Optional.of(testAdmin));
         Matcher createdMatcher = adminService.createMatcher(testAdmin.getId(), testMatcherDTO);
         verify(matcherRepository, times(1)).save(any());
@@ -136,40 +136,33 @@ class AdminServiceTest {
 
     @Test
     void addNewStudents_valid(){
-        Matcher testMatcher = new Matcher();
-        testMatcher.setId(1L);
-        testMatcher.getAdmins().add(testAdmin);
-        Student testStudent = TestingUtils.createStudent(3L, 3);
-        testStudent.setMatcher(testMatcher);
-        testMatcher.getStudents().add(testStudent);
-        List<String> testStudents = List.of("new-student-1@test.com", "new-student-2@test.com");
+        Matcher testMatcher = TestingUtils.createMatcher();
+        int numStudents = testMatcher.getStudents().size();
+        List<String> newStudents = List.of("new-student-1@test.com", "new-student-2@test.com");
         given(matcherRepository.findById(testMatcher.getId())).willReturn(Optional.of(testMatcher));
         given(studentRepository.existsByMatcherIdAndEmail(anyLong(), anyString())).willReturn(false);
-        assertEquals(1, testMatcher.getStudents().size());
-        Matcher storedMatcher = adminService.addNewStudents(testAdmin.getId(), testMatcher.getId(), testStudents);
-        assertEquals(3, storedMatcher.getStudents().size());
+        Matcher storedMatcher = adminService.addNewStudents(testMatcher.getAdmins().get(0).getId(), testMatcher.getId(), newStudents);
+        assertEquals(numStudents + newStudents.size(), storedMatcher.getStudents().size());
     }
 
     @Test
     void createQuestion_success() {
+        Matcher testMatcher = TestingUtils.createMatcher();
+        testMatcher.setPublishDate(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
         QuestionDTO testQuestionDTO = new QuestionDTO();
         testQuestionDTO.setContent("Test Question");
         testQuestionDTO.setQuestionType(QuestionType.SINGLE_CHOICE);
-        testQuestionDTO.setAnswers(List.of("Test Answer"));
-        Matcher testMatcher = new Matcher();
-        testMatcher.setId(1L);
-        testMatcher.setPublishDate(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
-        testMatcher.getAdmins().add(testAdmin);
+        testQuestionDTO.setAnswers(List.of("Test Answer 1", "Test Answer 2"));
+        int numQuestions = testMatcher.getQuestions().size();
         given(matcherRepository.findById(testMatcher.getId())).willReturn(Optional.of(testMatcher));
-        assertTrue(testMatcher.getQuestions().isEmpty());
-        Matcher storedMatcher = adminService.createQuestion(testAdmin.getId(), testMatcher.getId(), testQuestionDTO);
-        assertEquals(1, testMatcher.getQuestions().size());
-        assertEquals(testMatcher.getId(), storedMatcher.getQuestions().get(0).getMatcher().getId());
-        assertEquals(testQuestionDTO.getContent()+"?", storedMatcher.getQuestions().get(0).getContent());
-        assertEquals(testQuestionDTO.getQuestionType(), storedMatcher.getQuestions().get(0).getQuestionType());
-        assertEquals(testQuestionDTO.getWeight(), storedMatcher.getQuestions().get(0).getWeight());
-        assertEquals(testQuestionDTO.getAnswers(), storedMatcher.getQuestions().get(0).getAnswers()
-                .stream().map(Answer::getContent).toList());
+        Matcher storedMatcher = adminService.createQuestion(testMatcher.getAdmins().get(0).getId(), testMatcher.getId(), testQuestionDTO);
+        assertEquals(numQuestions + 1, testMatcher.getQuestions().size());
+        Question createdQuestion = storedMatcher.getQuestions().get(numQuestions);
+        assertEquals(testMatcher.getId(), createdQuestion.getMatcher().getId());
+        assertEquals(testQuestionDTO.getContent()+"?", createdQuestion.getContent());
+        assertEquals(testQuestionDTO.getQuestionType(), createdQuestion.getQuestionType());
+        assertEquals(testQuestionDTO.getWeight(), createdQuestion.getWeight());
+        assertEquals(testQuestionDTO.getAnswers(), createdQuestion.getAnswers().stream().map(Answer::getContent).toList());
 
 
     }

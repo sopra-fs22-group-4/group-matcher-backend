@@ -41,7 +41,6 @@ public class Student {
     @JoinTable(name = "student_answers",
             joinColumns = @JoinColumn(name = "student_id"),
             inverseJoinColumns = @JoinColumn(name = "answers_id"))
-    @OrderBy("question.id")
     private List<Answer> selectedAnswers = new ArrayList<>();
 
     @JsonProperty("questions")

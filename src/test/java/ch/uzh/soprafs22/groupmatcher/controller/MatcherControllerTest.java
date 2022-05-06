@@ -32,13 +32,14 @@ class MatcherControllerTest {
     @MockBean
     private MatcherService matcherService;
 
-    private Student testStudent;
     private Matcher testMatcher;
+
+    private Student testStudent;
 
     @BeforeEach
     public void setup() {
-        testMatcher = TestingUtils.createMatcher(1L);
-        testStudent = TestingUtils.createStudent(2L, 2);
+        testMatcher = TestingUtils.createMatcher();
+        testStudent = testMatcher.getStudents().get(0);
     }
 
     @SneakyThrows

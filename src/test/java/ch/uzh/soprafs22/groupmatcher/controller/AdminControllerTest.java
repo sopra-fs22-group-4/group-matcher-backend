@@ -35,18 +35,11 @@ class AdminControllerTest {
     @MockBean
     private EmailService emailService;
 
-    private UserDTO testUserDTO;
     private Admin testAdmin;
-    private Matcher testMatcher;
 
     @BeforeEach
     public void setup() {
-        testAdmin = TestingUtils.createAdmin(1L);
-        testUserDTO = new UserDTO();
-        testUserDTO.setEmail(testAdmin.getEmail());
-        testUserDTO.setPassword(testAdmin.getPassword());
-        testMatcher = new Matcher();
-        testMatcher.setId(2L);
+        testAdmin = TestingUtils.createAdmin();
     }
 
     @Test
@@ -54,7 +47,7 @@ class AdminControllerTest {
         given(adminService.createAdmin(any(UserDTO.class))).willReturn(testAdmin);
         mockMvc.perform(post("/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new Gson().toJson(testUserDTO)))
+                .content(new Gson().toJson(TestingUtils.convertToDTO(testAdmin))))
                 .andExpect(status().isCreated());
     }
 
@@ -64,7 +57,7 @@ class AdminControllerTest {
         given(adminService.validateLogin(any(UserDTO.class))).willReturn(testAdmin);
         mockMvc.perform(post("/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new Gson().toJson(testUserDTO)))
+                .content(new Gson().toJson(TestingUtils.convertToDTO(testAdmin))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(testAdmin.getId().intValue())))
                 .andExpect(jsonPath("$.email", is(testAdmin.getEmail())))
@@ -73,6 +66,7 @@ class AdminControllerTest {
 
     @Test
     void getMatcher_successful() throws Exception {
+        Matcher testMatcher = TestingUtils.createMatcher();
         given(adminService.getMatcherById(anyLong(),anyLong())).willReturn(testMatcher);
         mockMvc.perform(get("/admins/{adminId}/matchers/{matcherId}",
                         testAdmin.getId(),testMatcher.getId())

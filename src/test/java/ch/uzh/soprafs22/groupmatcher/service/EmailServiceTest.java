@@ -14,11 +14,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
@@ -43,11 +40,7 @@ class EmailServiceTest {
 
     @Test
     void activatePublishedMatchersTest() {
-        Matcher testMatcher = new Matcher();
-        testMatcher.setId(1L);
-        testMatcher.setPublishDate(ZonedDateTime.now().minus(2, ChronoUnit.MINUTES));
-        testMatcher.setDueDate(ZonedDateTime.now().minus(2, ChronoUnit.DAYS));
-        testMatcher.setStudents(Set.of(TestingUtils.createStudent(11L,0)));
+        Matcher testMatcher = TestingUtils.createMatcher();
         given(matcherRepository.save(any())).willAnswer(returnsFirstArg());
         given(matcherRepository.findByPublishDateIsAfterAndActiveFalse(any())).willReturn(List.of(testMatcher));
         assertFalse(testMatcher.isActive());
@@ -64,7 +57,7 @@ class EmailServiceTest {
 
     @Test
     void sendAccountVerificationEmailTest() {
-        Admin testAdmin = TestingUtils.createAdmin(1L);
+        Admin testAdmin = TestingUtils.createAdmin();
         emailService.sendAccountVerificationEmail(testAdmin);
         verify(mailSender).send(messageCaptor.capture());
         SimpleMailMessage sentEmail = messageCaptor.getValue();
@@ -74,10 +67,8 @@ class EmailServiceTest {
 
     @Test
     void sendResponseVerificationEmailTest() {
-        Matcher testMatcher = new Matcher();
-        testMatcher.setId(1L);
-        Student testStudent = TestingUtils.createStudent(2L, 2);
-        testStudent.setMatcher(testMatcher);
+        Matcher testMatcher = TestingUtils.createMatcher();
+        Student testStudent = testMatcher.getStudents().get(0);
         emailService.sendResponseVerificationEmail(testStudent);
         verify(mailSender).send(messageCaptor.capture());
         SimpleMailMessage sentEmail = messageCaptor.getValue();

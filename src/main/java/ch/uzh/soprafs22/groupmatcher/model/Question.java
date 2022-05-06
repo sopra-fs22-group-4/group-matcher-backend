@@ -5,7 +5,6 @@ import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.lang3.NotImplementedException;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -40,11 +39,4 @@ public class Question {
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL)
     private List<Answer> answers = new ArrayList<>();
-
-    public Double calculateSimilarity(Integer mostCommonCount) {
-        return switch (questionType) {
-            case SINGLE_CHOICE -> (((double) mostCommonCount - 1) / ((double) matcher.getGroupSize() - 1)) * answers.size();
-            case MULTIPLE_CHOICE, TEXT -> throw new NotImplementedException();
-        };
-    }
 }
