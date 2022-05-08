@@ -1,6 +1,9 @@
 name: Backend Quality Analysis
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   analysis:
