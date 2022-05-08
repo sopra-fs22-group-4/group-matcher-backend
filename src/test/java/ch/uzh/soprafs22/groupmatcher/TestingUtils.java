@@ -48,7 +48,7 @@ public class TestingUtils {
         Question question = new Question();
         question.setId(questionId);
         question.setOrdinalNum(matcher.getQuestions().size()+1);
-        question.setQuestionCategory(QuestionCategory.KNOWLEDGE);
+        question.setQuestionCategory(QuestionCategory.SIMILARITYMATCHING);
         question.setQuestionType(QuestionType.SINGLE_CHOICE);
         question.setContent("Test Question");
         question.setMatcher(matcher);

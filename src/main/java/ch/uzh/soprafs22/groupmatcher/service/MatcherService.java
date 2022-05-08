@@ -1,5 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
+import ch.uzh.soprafs22.groupmatcher.constant.QuestionCategory;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
@@ -9,6 +10,9 @@ import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherOverview;
 import ch.uzh.soprafs22.groupmatcher.repository.AnswerRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
+import ch.uzh.soprafs22.groupmatcher.service.matching.DataProcessing;
+import ch.uzh.soprafs22.groupmatcher.service.matching.Prim;
+import ch.uzh.soprafs22.groupmatcher.service.matching.Vertex;
 import com.google.common.base.Strings;
 import de.lmu.ifi.dbs.elki.algorithm.clustering.kmeans.initialization.KMeansInitialization;
 import de.lmu.ifi.dbs.elki.algorithm.clustering.kmeans.initialization.RandomUniformGeneratedInitialMeans;
@@ -33,6 +37,7 @@ import tutorial.clustering.SameSizeKMeansAlgorithm;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import static java.time.ZonedDateTime.now;
 
@@ -42,9 +47,7 @@ import static java.time.ZonedDateTime.now;
 public class MatcherService {
 
     private MatcherRepository matcherRepository;
-
     private StudentRepository studentRepository;
-
     private AnswerRepository answerRepository;
 
     public Student getStudent(Long matcherId, String studentEmail) {
@@ -55,7 +58,6 @@ public class MatcherService {
     public MatcherOverview getMatcherOverview(Long matcherId) {
         return matcherRepository.findMatcherById(matcherId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-
     }
 
     public Student findMatcherStudent(Long matcherId, UserDTO studentDTO) {
@@ -80,10 +82,14 @@ public class MatcherService {
                 .stream().map(this::runMostSimilarModel).toList();
     }
 
+    public List<Matcher> initMatchingPrim() {
+        return matcherRepository.findByDueDateIsAfterAndTeams_Empty(ZonedDateTime.now())
+                .stream().map(this::runMatchingPrimSpanningTree).toList();
+    }
+
     public Matcher runMostSimilarModel(Matcher matcher) {
         double[][] answerMatrix = buildAnswersMatrixForMatcher(matcher);
         String[] studentEmails = matcher.getStudents().stream().map(Student::getEmail).toArray(String[]::new);
-
         DatabaseConnection databaseConnection = new ArrayAdapterDatabaseConnection(answerMatrix, studentEmails);
         Database database = new StaticArrayDatabase(databaseConnection);
         database.initialize();
@@ -118,4 +124,62 @@ public class MatcherService {
                     .map(selectedAnswer -> selectedAnswer.getQuestion().getAnswers().size()).orElse(0))
                     .mapToDouble(Integer::doubleValue).toArray()).toArray(double[][]::new);
     }
+
+    public double[][] buildAnswersMatrixForMatcherByQCategory(Matcher matcher, QuestionCategory qCategory){
+
+        List<Long> answersIds = matcher.getQuestions().stream()
+                .filter(question -> question.getQuestionCategory().equals(qCategory))
+                .flatMap(question -> question.getAnswers().stream().map(Answer::getId))
+                .toList();
+
+        return matcher.getStudents().stream().map(student ->
+                answersIds.stream().map(answerId -> student.getSelectedAnswers()
+                    .stream().filter(selectedAnswer -> selectedAnswer.getId().equals(answerId)).findFirst()
+                    .map(selectedAnswer -> selectedAnswer.getQuestion().getAnswers().size()).orElse(0))
+                    .mapToDouble(Integer::doubleValue).toArray()).toArray(double[][]::new);
+    }
+
+    public Matcher runMatchingPrimSpanningTree(Matcher matcher){
+
+        DataProcessing dataProcessing = new DataProcessing();
+
+        String[] studentEmails = matcher.getStudents().stream().map(Student::getEmail).toArray(String[]::new);
+        double[][] simAnswersMatrix = buildAnswersMatrixForMatcherByQCategory(matcher,
+                QuestionCategory.SIMILARITYMATCHING);
+        double[][] diffAnswersMatrix = buildAnswersMatrixForMatcherByQCategory(matcher,
+                QuestionCategory.DIFFERENCEMATCHING);
+        double[][] simScoreMatrix = dataProcessing.calMatchingScore(simAnswersMatrix,true);
+        double[][] diffScoreMatrix = dataProcessing.calMatchingScore(diffAnswersMatrix,false);
+        double[][] totalScoreMatrix = dataProcessing.matrixAddition(simScoreMatrix,diffScoreMatrix);
+
+        List<Vertex> initGraph = dataProcessing.adjMatrixToVertexList(totalScoreMatrix,studentEmails);
+
+        int groupSize = matcher.getGroupSize();
+        Prim prim = new Prim(initGraph);
+
+        while(!prim.getGraph().isEmpty()){
+
+            Team newTeam = new Team();
+            newTeam.setMatcher(matcher);
+
+            prim.run(groupSize,false);
+
+            List<Vertex> newTeamMembers = prim.getVisitedVertex();
+
+            for (Vertex student: newTeamMembers) {
+                Student storedStudent = matcher.getStudents().stream()
+                        .filter(std -> Objects.equals(std.getEmail(), student.getEmail())).findFirst().orElse(null);
+                newTeam.getStudents().add(storedStudent);
+                if(null != storedStudent){
+                    storedStudent.setTeam(newTeam);
+                }
+            }
+            matcher.getTeams().add(newTeam);
+
+            prim.deleteVisitedVertex();
+        }
+
+        return matcherRepository.save(matcher);
+    }
+
 }
