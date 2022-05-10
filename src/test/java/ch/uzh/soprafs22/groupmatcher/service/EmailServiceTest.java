@@ -1,6 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
+import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
@@ -35,6 +36,7 @@ class EmailServiceTest {
     @MockBean
     JavaMailSender mailSender;
 
+    @MockBean
     @Captor
     ArgumentCaptor<SimpleMailMessage> messageCaptor;
 
@@ -59,6 +61,39 @@ class EmailServiceTest {
     void sendAccountVerificationEmailTest() {
         Admin testAdmin = TestingUtils.createAdmin();
         emailService.sendAccountVerificationEmail(testAdmin);
+        verify(mailSender).send(messageCaptor.capture());
+        SimpleMailMessage sentEmail = messageCaptor.getValue();
+        assertNotNull(sentEmail.getTo());
+        assertEquals(List.of(testAdmin.getEmail()), Arrays.stream(sentEmail.getTo()).toList());
+    }
+
+    @Test
+    void sendInvitationTest() {
+        Admin testAdmin = TestingUtils.createAdmin();
+        Matcher testMatcher = TestingUtils.createMatcher();
+        emailService.sendInvitation(testAdmin, testMatcher.getId());
+        verify(mailSender).send(messageCaptor.capture());
+        SimpleMailMessage sentEmail = messageCaptor.getValue();
+        assertNotNull(sentEmail.getTo());
+        assertEquals(List.of(testAdmin.getEmail()), Arrays.stream(sentEmail.getTo()).toList());
+    }
+
+    @Test
+    void sendReminderTest() {
+        Admin testAdmin = TestingUtils.createAdmin();
+        Matcher testMatcher = TestingUtils.createMatcher();
+        emailService.sendReminder(testAdmin, testMatcher.getId());
+        verify(mailSender).send(messageCaptor.capture());
+        SimpleMailMessage sentEmail = messageCaptor.getValue();
+        assertNotNull(sentEmail.getTo());
+        assertEquals(List.of(testAdmin.getEmail()), Arrays.stream(sentEmail.getTo()).toList());
+    }
+
+    @Test
+    void sendGroupInfoTest() {
+        Admin testAdmin = TestingUtils.createAdmin();
+        Matcher testMatcher = TestingUtils.createMatcher();
+        emailService.sendGroupInfo(testAdmin, testMatcher.getId());
         verify(mailSender).send(messageCaptor.capture());
         SimpleMailMessage sentEmail = messageCaptor.getValue();
         assertNotNull(sentEmail.getTo());

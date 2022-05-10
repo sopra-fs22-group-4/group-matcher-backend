@@ -1,5 +1,5 @@
 <!doctype html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
     <head>
         <!-- NAME: ANNOUNCE -->
         <!--[if gte mso 15]>
@@ -562,7 +562,7 @@
                         
                             <h4>&nbsp;</h4>
 
-<h1><font color="#000000" face="helvetica neue, helvetica, arial, verdana, sans-serif"><span style="background-color: #FFFFFF;">You're team ist waiting..</span></font></h1>
+<h1><font color="#000000" face="helvetica neue, helvetica, arial, verdana, sans-serif"><span style="background-color: #FFFFFF;">You're team is waiting..</span></font></h1>
 
                         </td>
                     </tr>
@@ -595,7 +595,7 @@
                         
                         <td valign="top" class="mcnTextContent" style="padding-top:0; padding-right:18px; padding-bottom:9px; padding-left:18px;">
                         
-                            <span style="background-color: #FFFFFF;">You were asked to fill out a small quiz so that we can match you into a team for <strong>*Software Construction*.</strong> We saw that you haven't had time yet to complete the quiz so we wanted to send you a quick reminder to do so until <strong>*Date*.</strong></span>
+                            <span style="background-color: #FFFFFF;">You were asked to fill out a small quiz so that we can match you into a team for <strong th:text="${courseName}"></strong> We saw that you haven't had time yet to complete the quiz so we wanted to send you a quick reminder to do so until <strong th:text="${dueDate}"></strong></span>
                         </td>
                     </tr>
                 </tbody></table>

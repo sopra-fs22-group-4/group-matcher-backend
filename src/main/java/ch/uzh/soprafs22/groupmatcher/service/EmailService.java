@@ -1,5 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
+import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
@@ -16,6 +17,7 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -57,6 +59,29 @@ public class EmailService {
         Map<String, Object> variables = Map.of("name", student.getName(),
                 "matcherId", student.getMatcher().getId(), "studentId", student.getId());
         mailSender.send(composeMessage("Verify Response", "email_verification.html", variables, student.getEmail()));
+    }
+
+    public void sendInvitation(Admin admin, Long matcherId) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+        Matcher matcher = matcherRepository.getById(matcherId);
+        String formattedString = matcher.getDueDate().format(formatter);
+        Map<String, Object> variables = Map.of("courseName",matcher.getCourseName(), "dueDate", formattedString);
+        mailSender.send(composeMessage("Invite Students", "invitation.html", variables, admin.getEmail()));
+    }
+
+    public void sendGroupInfo(Admin admin, Long matcherId) {
+        Matcher matcher = matcherRepository.getById(matcherId);
+        Map<String, Object> variables = Map.of("courseName",matcher.getCourseName());
+        mailSender.send(composeMessage("Group Information", "matching_results.html", variables, admin.getEmail()));
+    }
+
+    public void sendReminder(Admin admin, Long matcherId)
+    {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+        Matcher matcher = matcherRepository.getById(matcherId);
+        String formattedString = matcher.getDueDate().format(formatter);
+        Map<String, Object> variables = Map.of("courseName",matcher.getCourseName(), "dueDate", formattedString);
+        mailSender.send(composeMessage("Invite Students", "reminder.html", variables, admin.getEmail()));
     }
 
     public String[] mapToRecipients(List<Student> students) {
