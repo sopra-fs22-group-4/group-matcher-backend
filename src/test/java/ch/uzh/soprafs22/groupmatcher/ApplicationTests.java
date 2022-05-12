@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -24,6 +25,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.BDDMockito.given;
 
 @SpringBootTest(properties = {"db-scheduler.enabled=true"})
 @Transactional
@@ -61,6 +63,8 @@ class ApplicationTests {
         testUserDTO.setName("Test Admin");
         testUserDTO.setEmail("test-admin@email.com");
         testUserDTO.setPassword("test");
+        JavaMailSenderImpl mailSenderImpl = new JavaMailSenderImpl();
+        given(mailSender.createMimeMessage()).willReturn(mailSenderImpl.createMimeMessage());
         Long createdAdminId = adminController.createAdmin(testUserDTO);
         Admin storedAdmin = adminController.verifyAccount(createdAdminId);
         assertEquals(createdAdminId, storedAdmin.getId());

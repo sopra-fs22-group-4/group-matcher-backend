@@ -54,8 +54,7 @@ public class EmailService {
         return message;
     }
 
-    public Map<String, Object> parseMatcherVariables(Matcher matcher)
-    {
+    public Map<String, Object> parseMatcherVariables(Matcher matcher) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
         HashMap<String, Object> variables = new HashMap<>();
         variables.put("id",matcher.getId());
@@ -82,8 +81,7 @@ public class EmailService {
                 variables, mapToRecipients(matcher.getStudents())));
     }
 
-    public void sendReminder(Matcher matcher)
-    {
+    public void sendReminder(Matcher matcher) {
         Map<String, Object> variables = parseMatcherVariables(matcher);
         mailSender.send(composeMessage("Reminder", "reminder.html",
                 variables, mapToRecipients(matcher.getStudents())));

@@ -88,7 +88,6 @@ class EmailServiceTest {
         assertEquals("Verify Account", sentEmail.getSubject());
     }
 
-
     @SneakyThrows
     @Test
     void sendReminderTest() {
@@ -136,5 +135,4 @@ class EmailServiceTest {
         MimeMessage sentEmail = messageCaptor.getValue();
         assertEquals(List.of(testStudent.getEmail()), Arrays.stream(sentEmail.getAllRecipients()).map(Address::toString).toList());
     }
-
 }
