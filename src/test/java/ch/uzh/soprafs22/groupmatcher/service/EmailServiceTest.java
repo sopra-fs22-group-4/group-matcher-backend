@@ -40,9 +40,6 @@ class EmailServiceTest {
     MatcherRepository matcherRepository;
 
     @MockBean
-    Matcher matcher;
-
-    @MockBean
     JavaMailSender mailSender;
 
     @Autowired
@@ -88,6 +85,7 @@ class EmailServiceTest {
         assertEquals("email_verification.html", sentEmailParts.getBodyPart(0).getContent());
         assertEquals("<bg.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(1)).getContentID());
         assertEquals("<logo.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(2)).getContentID());
+        assertEquals("Verify Account", sentEmail.getSubject());
     }
 
 
@@ -107,6 +105,7 @@ class EmailServiceTest {
         assertEquals("reminder.html", sentEmailParts.getBodyPart(0).getContent());
         assertEquals("<bg.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(1)).getContentID());
         assertEquals("<logo.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(2)).getContentID());
+        assertEquals("Reminder", sentEmail.getSubject());
     }
 
     @SneakyThrows
@@ -121,6 +120,7 @@ class EmailServiceTest {
         MimeMessage sentEmail = messageCaptor.getValue();
         assertEquals(List.of(testStudent.getEmail(), testStudent1.getEmail(), testStudent2.getEmail()), Arrays.stream(sentEmail.getAllRecipients()).map(Address::toString).toList());
         Multipart sentEmailParts = (Multipart) sentEmail.getContent();
+        assertEquals("Group Information", sentEmail.getSubject());
         assertEquals("matching_results.html", sentEmailParts.getBodyPart(0).getContent());
         assertEquals("<bg.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(1)).getContentID());
         assertEquals("<logo.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(2)).getContentID());
@@ -136,36 +136,5 @@ class EmailServiceTest {
         MimeMessage sentEmail = messageCaptor.getValue();
         assertEquals(List.of(testStudent.getEmail()), Arrays.stream(sentEmail.getAllRecipients()).map(Address::toString).toList());
     }
-
-    @SneakyThrows
-    @Test
-    void emailSubjectGroupInfoTest() {
-        given(matcherRepository.getById(1L)).willReturn(testMatcher);
-        emailService.sendGroupInfo(testMatcher);
-        verify(mailSender).send(messageCaptor.capture());
-        MimeMessage sentEmail = messageCaptor.getValue();
-        assertEquals("Group Information", sentEmail.getSubject());
-    }
-
-    @SneakyThrows
-    @Test
-    void emailSubjectVerificationTest() {
-        Admin admin = TestingUtils.createAdmin();
-        emailService.sendAccountVerificationEmail(admin);
-        verify(mailSender).send(messageCaptor.capture());
-        MimeMessage sentEmail = messageCaptor.getValue();
-        assertEquals("Verify Account", sentEmail.getSubject());
-    }
-
-    @SneakyThrows
-    @Test
-    void emailSubjectReminderTest() {
-        given(matcherRepository.getById(1L)).willReturn(testMatcher);
-        emailService.sendReminder(testMatcher);
-        verify(mailSender).send(messageCaptor.capture());
-        MimeMessage sentEmail = messageCaptor.getValue();
-        assertEquals("Reminder", sentEmail.getSubject());
-    }
-
 
 }

@@ -47,7 +47,6 @@ public class MatcherService {
 
     private AnswerRepository answerRepository;
 
-
     public Student getStudent(Long matcherId, String studentEmail) {
         return studentRepository.getByMatcherIdAndEmail(matcherId, studentEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid email address"));

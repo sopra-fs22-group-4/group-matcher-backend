@@ -7,7 +7,6 @@ import ch.uzh.soprafs22.groupmatcher.service.MatcherService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.List;
 
