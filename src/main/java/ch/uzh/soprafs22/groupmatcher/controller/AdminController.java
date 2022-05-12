@@ -28,7 +28,7 @@ public class AdminController {
     @ResponseStatus(HttpStatus.CREATED)
     public Long createAdmin(@RequestBody UserDTO newAdmin) {
         Admin createdAdmin = adminService.createAdmin(newAdmin);
-        emailService.sendInvitation(createdAdmin, 2L);
+        emailService.sendAccountVerificationEmail(createdAdmin);
         return createdAdmin.getId();
     }
 

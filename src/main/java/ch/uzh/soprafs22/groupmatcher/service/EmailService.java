@@ -1,12 +1,12 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
-import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -18,6 +18,7 @@ import javax.mail.internet.MimeMessage;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,18 +37,31 @@ public class EmailService {
         MimeMessage message = mailSender.createMimeMessage();
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message,
-                    MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
+                    MimeMessageHelper.MULTIPART_MODE_MIXED, StandardCharsets.UTF_8.name());
+            Context context = new Context();
+            context.setVariables(variables);
             helper.setFrom("notify@groupmatcher.ch");
             helper.setTo(recipients);
             helper.setSubject(subject);
-            Context context = new Context();
-            context.setVariables(variables);
             String html = templateEngine.process(templateName, context);
             helper.setText(html, true);
+            helper.addInline("bg.png", new ClassPathResource("bg.png"));
+            helper.addInline("logo.png", new ClassPathResource("logo.png"));
+            helper.addInline("tagline.png", new ClassPathResource("tagline.png"));
         } catch (MessagingException exception) {
             log.info("Failed to create an email message");
         }
         return message;
+    }
+
+    public Map<String, Object> parseMatcherVariables(Matcher matcher)
+    {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        HashMap<String, Object> variables = new HashMap<>();
+        variables.put("id",matcher.getId());
+        variables.put("courseName", matcher.getCourseName());
+        variables.put("date",matcher.getDueDate().format(formatter));
+        return variables;
     }
 
     public void sendAccountVerificationEmail(Admin admin) {
@@ -61,27 +75,18 @@ public class EmailService {
         mailSender.send(composeMessage("Verify Response", "email_verification.html", variables, student.getEmail()));
     }
 
-    public void sendInvitation(Admin admin, Long matcherId) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-        Matcher matcher = matcherRepository.getById(matcherId);
-        String formattedString = matcher.getDueDate().format(formatter);
-        Map<String, Object> variables = Map.of("courseName",matcher.getCourseName(), "dueDate", formattedString);
-        mailSender.send(composeMessage("Invite Students", "invitation.html", variables, admin.getEmail()));
+
+    public void sendGroupInfo(Matcher matcher) {
+        Map<String, Object> variables = parseMatcherVariables(matcher);
+        mailSender.send(composeMessage("Group Information", "matching_results.html",
+                variables, mapToRecipients(matcher.getStudents())));
     }
 
-    public void sendGroupInfo(Admin admin, Long matcherId) {
-        Matcher matcher = matcherRepository.getById(matcherId);
-        Map<String, Object> variables = Map.of("courseName",matcher.getCourseName());
-        mailSender.send(composeMessage("Group Information", "matching_results.html", variables, admin.getEmail()));
-    }
-
-    public void sendReminder(Admin admin, Long matcherId)
+    public void sendReminder(Matcher matcher)
     {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-        Matcher matcher = matcherRepository.getById(matcherId);
-        String formattedString = matcher.getDueDate().format(formatter);
-        Map<String, Object> variables = Map.of("courseName",matcher.getCourseName(), "dueDate", formattedString);
-        mailSender.send(composeMessage("Reminder", "reminder.html", variables, admin.getEmail()));
+        Map<String, Object> variables = parseMatcherVariables(matcher);
+        mailSender.send(composeMessage("Reminder", "reminder.html",
+                variables, mapToRecipients(matcher.getStudents())));
     }
 
     public String[] mapToRecipients(List<Student> students) {

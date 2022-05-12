@@ -47,9 +47,6 @@ public class MatcherService {
 
     private AnswerRepository answerRepository;
 
-    public Matcher getMatcherById(Long matcherId) {
-        return matcherRepository.getById(matcherId);
-    }
 
     public Student getStudent(Long matcherId, String studentEmail) {
         return studentRepository.getByMatcherIdAndEmail(matcherId, studentEmail)
