@@ -81,7 +81,7 @@ public class EmailService {
         Matcher matcher = matcherRepository.getById(matcherId);
         String formattedString = matcher.getDueDate().format(formatter);
         Map<String, Object> variables = Map.of("courseName",matcher.getCourseName(), "dueDate", formattedString);
-        mailSender.send(composeMessage("Invite Students", "reminder.html", variables, admin.getEmail()));
+        mailSender.send(composeMessage("Reminder", "reminder.html", variables, admin.getEmail()));
     }
 
     public String[] mapToRecipients(List<Student> students) {
