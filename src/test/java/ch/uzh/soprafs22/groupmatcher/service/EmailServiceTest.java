@@ -18,6 +18,8 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import javax.mail.Address;
+import javax.mail.Multipart;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import java.util.Arrays;
 import java.util.List;
@@ -79,6 +81,49 @@ class EmailServiceTest {
         verify(mailSender).send(messageCaptor.capture());
         MimeMessage sentEmail = messageCaptor.getValue();
         assertEquals(List.of(testAdmin.getEmail()), Arrays.stream(sentEmail.getAllRecipients()).map(Address::toString).toList());
+        Multipart sentEmailParts = (Multipart) sentEmail.getContent();
+        assertEquals("email_verification.html", sentEmailParts.getBodyPart(0).getContent());
+        assertEquals("<bg.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(1)).getContentID());
+        assertEquals("<logo.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(2)).getContentID());
+        assertEquals("Verify Account", sentEmail.getSubject());
+    }
+
+
+    @SneakyThrows
+    @Test
+    void sendReminderTest() {
+        Student testStudent = testMatcher.getStudents().get(0);
+        Student testStudent1 = testMatcher.getStudents().get(1);
+        Student testStudent2 = testMatcher.getStudents().get(2);
+
+        given(matcherRepository.getById(1L)).willReturn(testMatcher);
+        emailService.sendReminder(testMatcher);
+        verify(mailSender).send(messageCaptor.capture());
+        MimeMessage sentEmail = messageCaptor.getValue();
+        assertEquals(List.of(testStudent.getEmail(),testStudent1.getEmail(),testStudent2.getEmail()), Arrays.stream(sentEmail.getAllRecipients()).map(Address::toString).toList());
+        Multipart sentEmailParts = (Multipart) sentEmail.getContent();
+        assertEquals("reminder.html", sentEmailParts.getBodyPart(0).getContent());
+        assertEquals("<bg.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(1)).getContentID());
+        assertEquals("<logo.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(2)).getContentID());
+        assertEquals("Reminder", sentEmail.getSubject());
+    }
+
+    @SneakyThrows
+    @Test()
+    void sendGroupInfoTest() {
+        Student testStudent = testMatcher.getStudents().get(0);
+        Student testStudent1 = testMatcher.getStudents().get(1);
+        Student testStudent2 = testMatcher.getStudents().get(2);
+        given(matcherRepository.getById(1L)).willReturn(testMatcher);
+        emailService.sendGroupInfo(testMatcher);
+        verify(mailSender).send(messageCaptor.capture());
+        MimeMessage sentEmail = messageCaptor.getValue();
+        assertEquals(List.of(testStudent.getEmail(), testStudent1.getEmail(), testStudent2.getEmail()), Arrays.stream(sentEmail.getAllRecipients()).map(Address::toString).toList());
+        Multipart sentEmailParts = (Multipart) sentEmail.getContent();
+        assertEquals("Group Information", sentEmail.getSubject());
+        assertEquals("matching_results.html", sentEmailParts.getBodyPart(0).getContent());
+        assertEquals("<bg.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(1)).getContentID());
+        assertEquals("<logo.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(2)).getContentID());
     }
 
     @SneakyThrows
@@ -89,7 +134,7 @@ class EmailServiceTest {
         emailService.sendResponseVerificationEmail(testStudent);
         verify(mailSender).send(messageCaptor.capture());
         MimeMessage sentEmail = messageCaptor.getValue();
-        assertNotNull(sentEmail.getAllRecipients());
         assertEquals(List.of(testStudent.getEmail()), Arrays.stream(sentEmail.getAllRecipients()).map(Address::toString).toList());
     }
+
 }
