@@ -1,5 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
+import ch.uzh.soprafs22.groupmatcher.constant.Status;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
@@ -78,10 +79,14 @@ public class MatcherService {
     }
 
     public List<Matcher> initMatching() {
-        return matcherRepository.findByDueDateIsAfterAndTeams_Empty(ZonedDateTime.now())
-                .stream().map(matcher -> switch (matcher.getMatchingStrategy()) {
-                    case MOST_SIMILAR -> runMostSimilarModel(matcher);
-                    case BALANCED_SKILLS -> runBalancedSkillsModelTemp(matcher);
+        return matcherRepository.findByDueDateIsAfterAndStatus(ZonedDateTime.now(), Status.ACTIVE)
+                .stream().map(matcher -> {
+                    matcher.setStatus(Status.MATCHING);
+                    Matcher updatedMatcher = matcherRepository.save(matcher);
+                    return switch (updatedMatcher.getMatchingStrategy()) {
+                        case MOST_SIMILAR -> runMostSimilarModel(updatedMatcher);
+                        case BALANCED_SKILLS -> runBalancedSkillsModelTemp(updatedMatcher);
+                    };
                 }).toList();
     }
 
@@ -109,6 +114,7 @@ public class MatcherService {
             }
             matcher.getTeams().add(newTeam);
         });
+        matcher.setStatus(Status.MATCHED);
         return matcherRepository.save(matcher);
     }
 

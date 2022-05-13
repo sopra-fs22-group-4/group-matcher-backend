@@ -22,6 +22,8 @@ public class Team {
 
     private Double skillScore;
 
+    private boolean notified = false;
+
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "matcher_id")

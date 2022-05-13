@@ -1,5 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
+import ch.uzh.soprafs22.groupmatcher.constant.Status;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
@@ -74,11 +75,17 @@ public class EmailService {
         mailSender.send(composeMessage("Verify Response", "email_verification.html", variables, student.getEmail()));
     }
 
-
-    public void sendGroupInfo(Matcher matcher) {
-        Map<String, Object> variables = parseMatcherVariables(matcher);
-        mailSender.send(composeMessage("Group Information", "matching_results.html",
-                variables, mapToRecipients(matcher.getStudents())));
+    public List<Matcher> sendMatchedGroupNotificationEmail() {
+        return matcherRepository.findByStatus(Status.MATCHED).stream().map(matcher -> {
+            matcher.getTeams().forEach(team -> {
+                Map<String, Object> variables = parseMatcherVariables(matcher);
+                mailSender.send(composeMessage("Group Introduction", "matching_results.html",
+                        variables, mapToRecipients(team.getStudents())));
+                team.setNotified(true);
+            });
+            matcher.setStatus(Status.COMPLETED);
+            return matcherRepository.save(matcher);
+        }).toList();
     }
 
     public void sendReminder(Matcher matcher) {
@@ -91,13 +98,12 @@ public class EmailService {
         return students.stream().map(Student::getEmail).toArray(String[]::new);
     }
 
-    public List<Matcher> activateScheduledMatchers() {
-        return matcherRepository.findByPublishDateIsBeforeAndActiveFalse(ZonedDateTime.now()).stream().map(matcher -> {
-            Map<String, Object> variables = Map.of("courseName", matcher.getCourseName(),
-                    "matcherId", matcher.getId(), "dueDate", matcher.getDueDate());
+    public List<Matcher> sendMatchingQuizInviteEmail() {
+        return matcherRepository.findByPublishDateIsBeforeAndStatus(ZonedDateTime.now(), Status.DRAFT).stream().map(matcher -> {
+            Map<String, Object> variables = parseMatcherVariables(matcher);
             mailSender.send(composeMessage("Link to Matching Quiz", "invitation.html",
                     variables, mapToRecipients(matcher.getStudents())));
-            matcher.setActive(true);
+            matcher.setStatus(Status.ACTIVE);
             return matcherRepository.save(matcher);
         }).toList();
     }

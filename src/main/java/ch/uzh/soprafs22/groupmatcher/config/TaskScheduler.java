@@ -18,12 +18,12 @@ import static java.time.ZonedDateTime.now;
 public class TaskScheduler {
 
     @Bean
-    Task<Void> activateScheduledMatchersTask(EmailService emailService) {
+    Task<Void> sendMatchingQuizInviteEmailTask(EmailService emailService) {
         return Tasks
-                .recurring("activate-scheduled-matchers", fixedDelay(Duration.ofMinutes(1)))
+                .recurring("send-invite", fixedDelay(Duration.ofMinutes(1)))
                 .execute((taskInstance, executionContext) -> {
                     log.info("Checking if there are matchers scheduled to be published before {}", now());
-                    emailService.activateScheduledMatchers();
+                    emailService.sendMatchingQuizInviteEmail();
                 });
     }
 
@@ -34,6 +34,16 @@ public class TaskScheduler {
                 .execute((taskInstance, executionContext) -> {
                     log.info("Checking if there are matchers due before {}", now());
                     matcherService.initMatching();
+                });
+    }
+
+    @Bean
+    Task<Void> sendMatchedGroupNotificationEmailTask(EmailService emailService) {
+        return Tasks
+                .recurring("notify-groups", fixedDelay(Duration.ofMinutes(1)))
+                .execute((taskInstance, executionContext) -> {
+                    log.info("Checking if any of the active matching procedures are finished...");
+                    emailService.sendMatchedGroupNotificationEmail();
                 });
     }
 }

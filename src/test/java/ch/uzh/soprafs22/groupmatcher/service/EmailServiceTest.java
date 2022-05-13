@@ -1,9 +1,11 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
+import ch.uzh.soprafs22.groupmatcher.constant.Status;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
+import ch.uzh.soprafs22.groupmatcher.model.Team;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -60,17 +62,17 @@ class EmailServiceTest {
 
     @SneakyThrows
     @Test
-    void activatePublishedMatchersTest() {
-        given(matcherRepository.findByPublishDateIsBeforeAndActiveFalse(any())).willReturn(List.of(testMatcher));
-        assertFalse(testMatcher.isActive());
-        List<Matcher> activatedMatchers = emailService.activateScheduledMatchers();
+    void sendMatchingQuizInviteEmailTest() {
+        testMatcher.setStatus(Status.DRAFT);
+        given(matcherRepository.findByPublishDateIsBeforeAndStatus(any(), any())).willReturn(List.of(testMatcher));
+        List<Matcher> activatedMatchers = emailService.sendMatchingQuizInviteEmail();
         verify(mailSender).send(messageCaptor.capture());
         MimeMessage sentEmail = messageCaptor.getValue();
         assertEquals("Link to Matching Quiz", sentEmail.getSubject());
         assertEquals(testMatcher.getStudents().size(), sentEmail.getAllRecipients().length);
         assertEquals(1, activatedMatchers.size());
         assertEquals(testMatcher.getId(), activatedMatchers.get(0).getId());
-        assertTrue(activatedMatchers.get(0).isActive());
+        assertEquals(Status.ACTIVE, activatedMatchers.get(0).getStatus());
     }
 
     @SneakyThrows
@@ -109,17 +111,24 @@ class EmailServiceTest {
 
     @SneakyThrows
     @Test()
-    void sendGroupInfoTest() {
-        Student testStudent = testMatcher.getStudents().get(0);
-        Student testStudent1 = testMatcher.getStudents().get(1);
-        Student testStudent2 = testMatcher.getStudents().get(2);
-        given(matcherRepository.getById(1L)).willReturn(testMatcher);
-        emailService.sendGroupInfo(testMatcher);
+    void sendMatchedGroupNotificationEmailTest() {
+        Team testTeam = new Team();
+        testTeam.setId(500L);
+        testTeam.setMatcher(testMatcher);
+        testTeam.getStudents().addAll(testMatcher.getStudents());
+        testMatcher.getTeams().add(testTeam);
+        testMatcher.setStatus(Status.MATCHED);
+        assertFalse(testMatcher.getTeams().get(0).isNotified());
+        given(matcherRepository.findByStatus(Status.MATCHED)).willReturn(List.of(testMatcher));
+        List<Matcher> completedMatchers = emailService.sendMatchedGroupNotificationEmail();
+        assertEquals(Status.COMPLETED, completedMatchers.get(0).getStatus());
+        assertTrue(completedMatchers.get(0).getTeams().get(0).isNotified());
         verify(mailSender).send(messageCaptor.capture());
         MimeMessage sentEmail = messageCaptor.getValue();
-        assertEquals(List.of(testStudent.getEmail(), testStudent1.getEmail(), testStudent2.getEmail()), Arrays.stream(sentEmail.getAllRecipients()).map(Address::toString).toList());
+        assertEquals(testTeam.getStudents().stream().map(Student::getEmail).toList(),
+                Arrays.stream(sentEmail.getAllRecipients()).map(Address::toString).toList());
         Multipart sentEmailParts = (Multipart) sentEmail.getContent();
-        assertEquals("Group Information", sentEmail.getSubject());
+        assertEquals("Group Introduction", sentEmail.getSubject());
         assertEquals("matching_results.html", sentEmailParts.getBodyPart(0).getContent());
         assertEquals("<bg.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(1)).getContentID());
         assertEquals("<logo.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(2)).getContentID());

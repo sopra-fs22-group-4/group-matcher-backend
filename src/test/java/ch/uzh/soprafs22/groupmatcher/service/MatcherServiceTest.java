@@ -145,7 +145,7 @@ class MatcherServiceTest {
         Student student7 = TestingUtils.createStudent(107L, testMatcher);
         student7.setSelectedAnswers(selectedAnswers7);
         testMatcher.getStudents().add(student7);
-        given(matcherRepository.findByDueDateIsAfterAndTeams_Empty(any())).willReturn(List.of(testMatcher));
+        given(matcherRepository.findByDueDateIsAfterAndStatus(any(), any())).willReturn(List.of(testMatcher));
         given(studentRepository.getByMatcherIdAndEmail(anyLong(), anyString())).willAnswer(invocation ->
                 testMatcher.getStudents().stream().filter(student -> student.getEmail().equals(invocation.getArgument(1))).findFirst());
         List<Matcher> returnedMatchers = matcherService.initMatching();
@@ -228,7 +228,7 @@ class MatcherServiceTest {
         /*
          * GIVEN
          * */
-        given(matcherRepository.findByDueDateIsAfterAndTeams_Empty(any())).willReturn(List.of(testMatcher));
+        given(matcherRepository.findByDueDateIsAfterAndStatus(any(), any())).willReturn(List.of(testMatcher));
 
         /*
          * RUN

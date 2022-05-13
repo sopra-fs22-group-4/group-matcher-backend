@@ -1,5 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.repository;
 
+import ch.uzh.soprafs22.groupmatcher.constant.Status;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherAdminOverview;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherOverview;
@@ -15,7 +16,9 @@ public interface MatcherRepository extends JpaRepository<Matcher, Long> {
 
     List<MatcherAdminOverview> findByAdmins_IdOrderByDueDateDesc(Long adminId);
 
-    List<Matcher> findByPublishDateIsBeforeAndActiveFalse(ZonedDateTime sendAt);
+    List<Matcher> findByPublishDateIsBeforeAndStatus(ZonedDateTime sendAt, Status status);
 
-    List<Matcher> findByDueDateIsAfterAndTeams_Empty(ZonedDateTime dueAt);
+    List<Matcher> findByDueDateIsAfterAndStatus(ZonedDateTime dueAt, Status status);
+
+    List<Matcher> findByStatus(Status status);
 }

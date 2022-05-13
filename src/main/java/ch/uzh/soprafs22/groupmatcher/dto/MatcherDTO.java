@@ -1,5 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.dto;
 
+import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,4 +15,5 @@ public class MatcherDTO {
     private ZonedDateTime publishDate;
     private ZonedDateTime dueDate;
     private Integer groupSize;
+    private MatchingStrategy matchingStrategy;
 }

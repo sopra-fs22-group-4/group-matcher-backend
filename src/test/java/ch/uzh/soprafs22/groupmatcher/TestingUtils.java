@@ -1,5 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher;
 
+import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionCategory;
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
@@ -61,6 +62,7 @@ public class TestingUtils {
         matcher.setCourseName("Test Course");
         matcher.setUniversity("Test University");
         matcher.setDescription("Test Description");
+        matcher.setMatchingStrategy(MatchingStrategy.MOST_SIMILAR);
         matcher.setPublishDate(ZonedDateTime.now().minus(2, ChronoUnit.MINUTES));
         matcher.setDueDate(ZonedDateTime.now().plus(7, ChronoUnit.DAYS));
         matcher.setGroupSize(3);

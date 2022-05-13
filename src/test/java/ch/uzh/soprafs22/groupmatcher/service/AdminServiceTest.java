@@ -127,11 +127,12 @@ class AdminServiceTest {
         testMatcherDTO.setPublishDate(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
         testMatcherDTO.setDueDate(ZonedDateTime.now().plus(7, ChronoUnit.DAYS));
         testMatcherDTO.setGroupSize(3);
+        testMatcherDTO.setMatchingStrategy(MatchingStrategy.MOST_SIMILAR);
         given(adminRepository.findById(testAdmin.getId())).willReturn(Optional.of(testAdmin));
         Matcher createdMatcher = adminService.createMatcher(testAdmin.getId(), testMatcherDTO);
         verify(matcherRepository, times(1)).save(any());
         assertEquals(testMatcherDTO.getGroupSize(), createdMatcher.getGroupSize());
-        assertEquals(MatchingStrategy.MOST_SIMILAR, createdMatcher.getMatchingStrategy());
+        assertEquals(testMatcherDTO.getMatchingStrategy(), createdMatcher.getMatchingStrategy());
     }
 
     @Test
