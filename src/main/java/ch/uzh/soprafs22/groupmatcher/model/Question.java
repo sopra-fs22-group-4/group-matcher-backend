@@ -30,7 +30,7 @@ public class Question {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private QuestionCategory questionCategory = QuestionCategory.KNOWLEDGE;
+    private QuestionCategory questionCategory;
 
     @JsonIgnore
     @ManyToOne

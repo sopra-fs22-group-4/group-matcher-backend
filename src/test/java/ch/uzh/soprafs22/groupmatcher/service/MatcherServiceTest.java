@@ -1,6 +1,8 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
+import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
+import ch.uzh.soprafs22.groupmatcher.constant.QuestionCategory;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
@@ -16,9 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,7 +31,6 @@ class MatcherServiceTest {
 
     @MockBean
     private MatcherRepository matcherRepository;
-
     @MockBean
     private StudentRepository studentRepository;
     @MockBean
@@ -167,5 +166,91 @@ class MatcherServiceTest {
                 .stream().map(Student::getId).collect(Collectors.toSet()));
         assertEquals(expectedTeamStudents4_5_6, returnedMatcher.getStudents().get(3).getTeam().getStudents()
                 .stream().map(Student::getId).collect(Collectors.toSet()));
+    }
+
+    @Test
+    void initMatchingTest_BalancedSkill() {
+        /*
+        * SETUP
+        * */
+        testMatcher.setMatchingStrategy(MatchingStrategy.BALANCED_SKILLS);
+        testMatcher.getQuestions().get(1).setQuestionCategory(QuestionCategory.SKILLS);
+        // Add more test students (Total : 7)
+        Student student4 = TestingUtils.createStudent(104L, testMatcher);
+        Student student5 = TestingUtils.createStudent(105L, testMatcher);
+        Student student6 = TestingUtils.createStudent(106L, testMatcher);
+        Student student7 = TestingUtils.createStudent(107L, testMatcher);
+        testMatcher.getStudents().addAll(List.of(student4,student5,student6,student7));
+        assertEquals(3,testMatcher.getGroupSize());
+        // Team 1: {student1,student3,student5}
+        Set<Long> expectedTeamStudents135 = Set.of(
+                testMatcher.getStudents().get(0).getId(),
+                testMatcher.getStudents().get(2).getId(),
+                testMatcher.getStudents().get(4).getId());
+        // Team 2: {student2,student4,student7}
+        Set<Long> expectedTeamStudents247 = Set.of(
+                testMatcher.getStudents().get(1).getId(),
+                testMatcher.getStudents().get(3).getId(),
+                testMatcher.getStudents().get(6).getId());
+        // Team 3: {student6}
+        Set<Long> expectedTeamStudents6 = Set.of(
+                testMatcher.getStudents().get(5).getId()
+        );
+
+        // Intended Student Answer Matrix (1 : Selected, 0 : Not Selected)
+        double[][] simAnswersMatrix = new double[][]{
+                {1, 0, 1, 1, 1, 1},
+                {0, 0, 1, 1, 0, 0},
+                {1, 1, 0, 0, 1, 1},
+                {0, 1, 0, 1, 0, 1},
+                {1, 1, 0, 0, 0, 0},
+                {0, 0, 1, 1, 1, 0},
+                {1, 0, 0, 0, 1, 0}
+        };
+        List<Answer> candidateAnswers = testMatcher.getQuestions().stream().map(Question::getAnswers)
+                .toList().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        assertEquals(6, candidateAnswers.size());
+        for (int i = 0; i<testMatcher.getStudents().size(); i++){
+            List<Answer> studentAnswers = new ArrayList<>();
+            for (int j = 0; j<candidateAnswers.size(); j++){
+                if (simAnswersMatrix[i][j] == 1){
+                    studentAnswers.add(candidateAnswers.get(j));
+                    List<Student> studentsInAnswer = candidateAnswers.get(j).getStudents();
+                    studentsInAnswer.add(testMatcher.getStudents().get(i));
+                    candidateAnswers.get(j).setStudents(studentsInAnswer);
+                }
+            }
+            testMatcher.getStudents().get(i).setSelectedAnswers(studentAnswers);
+            assertEquals(Arrays.stream(simAnswersMatrix[i]).sum(),
+                    testMatcher.getStudents().get(i).getSelectedAnswers().size());
+        }
+
+        /*
+         * GIVEN
+         * */
+        given(matcherRepository.findByDueDateIsAfterAndTeams_Empty(any())).willReturn(List.of(testMatcher));
+
+        /*
+         * RUN
+         * */
+        List<Matcher> returnedMatchers = matcherService.initMatching();
+        Matcher returnedMatcher = returnedMatchers.get(0);
+        assertEquals(1, returnedMatchers.size());
+        assertEquals(testMatcher.getId(), returnedMatcher.getId());
+
+        // CHECK MAIN
+        assertEquals(3, returnedMatcher.getTeams().size());
+        assertEquals(3, returnedMatcher.getTeams().get(0).getStudents().size());
+        assertEquals(3, returnedMatcher.getTeams().get(1).getStudents().size());
+        assertEquals(1, returnedMatcher.getTeams().get(2).getStudents().size());
+        assertEquals(expectedTeamStudents135,
+                returnedMatcher.getTeams().get(0)
+                        .getStudents().stream().map(Student::getId).collect(Collectors.toSet()));
+        assertEquals(expectedTeamStudents247,
+                returnedMatcher.getTeams().get(1)
+                        .getStudents().stream().map(Student::getId).collect(Collectors.toSet()));
+        assertEquals(expectedTeamStudents6,
+                returnedMatcher.getTeams().get(2)
+                        .getStudents().stream().map(Student::getId).collect(Collectors.toSet()));
     }
 }
