@@ -1,6 +1,8 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
+import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
+import ch.uzh.soprafs22.groupmatcher.constant.QuestionCategory;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
@@ -167,10 +169,12 @@ class MatcherServiceTest {
     }
 
     @Test
-    void initMatchingPrimTest() {
+    void initMatchingTest_BalancedSkill() {
         /*
         * SETUP
         * */
+        testMatcher.setMatchingStrategy(MatchingStrategy.BALANCED_SKILLS);
+        testMatcher.getQuestions().get(1).setQuestionCategory(QuestionCategory.SKILLS);
         // Add more test students (Total : 7)
         Student student4 = TestingUtils.createStudent(104L, testMatcher);
         Student student5 = TestingUtils.createStudent(105L, testMatcher);
@@ -178,19 +182,19 @@ class MatcherServiceTest {
         Student student7 = TestingUtils.createStudent(107L, testMatcher);
         testMatcher.getStudents().addAll(List.of(student4,student5,student6,student7));
         assertEquals(3,testMatcher.getGroupSize());
-        // Team 1: {student1,student3,student6}
-        Set<Long> expectedTeamStudents126 = Set.of(
+        // Team 1: {student1,student3,student5}
+        Set<Long> expectedTeamStudents135 = Set.of(
                 testMatcher.getStudents().get(0).getId(),
-                testMatcher.getStudents().get(1).getId(),
-                testMatcher.getStudents().get(5).getId());
-        // Team 2: {student2,student4,student5}
-        Set<Long> expectedTeamStudents357 = Set.of(
                 testMatcher.getStudents().get(2).getId(),
-                testMatcher.getStudents().get(4).getId(),
+                testMatcher.getStudents().get(4).getId());
+        // Team 2: {student2,student4,student7}
+        Set<Long> expectedTeamStudents247 = Set.of(
+                testMatcher.getStudents().get(1).getId(),
+                testMatcher.getStudents().get(3).getId(),
                 testMatcher.getStudents().get(6).getId());
-        // Team 3: {student7}
-        Set<Long> expectedTeamStudents4 = Set.of(
-                testMatcher.getStudents().get(3).getId()
+        // Team 3: {student6}
+        Set<Long> expectedTeamStudents6 = Set.of(
+                testMatcher.getStudents().get(5).getId()
         );
 
         // Intended Student Answer Matrix (1 : Selected, 0 : Not Selected)
@@ -211,6 +215,9 @@ class MatcherServiceTest {
             for (int j = 0; j<candidateAnswers.size(); j++){
                 if (simAnswersMatrix[i][j] == 1){
                     studentAnswers.add(candidateAnswers.get(j));
+                    List<Student> studentsInAnswer = candidateAnswers.get(j).getStudents();
+                    studentsInAnswer.add(testMatcher.getStudents().get(i));
+                    candidateAnswers.get(j).setStudents(studentsInAnswer);
                 }
             }
             testMatcher.getStudents().get(i).setSelectedAnswers(studentAnswers);
@@ -226,7 +233,7 @@ class MatcherServiceTest {
         /*
          * RUN
          * */
-        List<Matcher> returnedMatchers = matcherService.initMatchingPrim();
+        List<Matcher> returnedMatchers = matcherService.initMatching();
         Matcher returnedMatcher = returnedMatchers.get(0);
         assertEquals(1, returnedMatchers.size());
         assertEquals(testMatcher.getId(), returnedMatcher.getId());
@@ -236,13 +243,13 @@ class MatcherServiceTest {
         assertEquals(3, returnedMatcher.getTeams().get(0).getStudents().size());
         assertEquals(3, returnedMatcher.getTeams().get(1).getStudents().size());
         assertEquals(1, returnedMatcher.getTeams().get(2).getStudents().size());
-        assertEquals(expectedTeamStudents126,
+        assertEquals(expectedTeamStudents135,
                 returnedMatcher.getTeams().get(0)
                         .getStudents().stream().map(Student::getId).collect(Collectors.toSet()));
-        assertEquals(expectedTeamStudents357,
+        assertEquals(expectedTeamStudents247,
                 returnedMatcher.getTeams().get(1)
                         .getStudents().stream().map(Student::getId).collect(Collectors.toSet()));
-        assertEquals(expectedTeamStudents4,
+        assertEquals(expectedTeamStudents6,
                 returnedMatcher.getTeams().get(2)
                         .getStudents().stream().map(Student::getId).collect(Collectors.toSet()));
     }

@@ -1,6 +1,5 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
-import ch.uzh.soprafs22.groupmatcher.constant.QuestionCategory;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
@@ -30,6 +29,7 @@ import de.lmu.ifi.dbs.elki.distance.distancefunction.minkowski.EuclideanDistance
 import de.lmu.ifi.dbs.elki.utilities.random.RandomFactory;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -79,12 +79,10 @@ public class MatcherService {
 
     public List<Matcher> initMatching() {
         return matcherRepository.findByDueDateIsAfterAndTeams_Empty(ZonedDateTime.now())
-                .stream().map(this::runMostSimilarModel).toList();
-    }
-
-    public List<Matcher> initMatchingPrim() {
-        return matcherRepository.findByDueDateIsAfterAndTeams_Empty(ZonedDateTime.now())
-                .stream().map(this::runMatchingPrimSpanningTree).toList();
+                .stream().map(matcher -> switch (matcher.getMatchingStrategy()) {
+                    case MOST_SIMILAR -> runMostSimilarModel(matcher);
+                    case BALANCED_SKILLS -> runBalancedSkillsModelTemp(matcher);
+                }).toList();
     }
 
     public Matcher runMostSimilarModel(Matcher matcher) {
@@ -125,32 +123,12 @@ public class MatcherService {
                     .mapToDouble(Integer::doubleValue).toArray()).toArray(double[][]::new);
     }
 
-    public double[][] buildAnswersMatrixForMatcherByQCategory(Matcher matcher, QuestionCategory qCategory){
-
-        List<Long> answersIds = matcher.getQuestions().stream()
-                .filter(question -> question.getQuestionCategory().equals(qCategory))
-                .flatMap(question -> question.getAnswers().stream().map(Answer::getId))
-                .toList();
-
-        return matcher.getStudents().stream().map(student ->
-                answersIds.stream().map(answerId -> student.getSelectedAnswers()
-                    .stream().filter(selectedAnswer -> selectedAnswer.getId().equals(answerId)).findFirst()
-                    .map(selectedAnswer -> selectedAnswer.getQuestion().getAnswers().size()).orElse(0))
-                    .mapToDouble(Integer::doubleValue).toArray()).toArray(double[][]::new);
-    }
-
-    public Matcher runMatchingPrimSpanningTree(Matcher matcher){
+    public Matcher runBalancedSkillsModelTemp(Matcher matcher){
 
         DataProcessing dataProcessing = new DataProcessing();
 
         String[] studentEmails = matcher.getStudents().stream().map(Student::getEmail).toArray(String[]::new);
-        double[][] simAnswersMatrix = buildAnswersMatrixForMatcherByQCategory(matcher,
-                QuestionCategory.SIMILARITYMATCHING);
-        double[][] diffAnswersMatrix = buildAnswersMatrixForMatcherByQCategory(matcher,
-                QuestionCategory.DIFFERENCEMATCHING);
-        double[][] simScoreMatrix = dataProcessing.calMatchingScore(simAnswersMatrix,true);
-        double[][] diffScoreMatrix = dataProcessing.calMatchingScore(diffAnswersMatrix,false);
-        double[][] totalScoreMatrix = dataProcessing.matrixAddition(simScoreMatrix,diffScoreMatrix);
+        double[][] totalScoreMatrix = dataProcessing.calMatchingScoreTemp(matcher.getStudents());
 
         List<Vertex> initGraph = dataProcessing.adjMatrixToVertexList(totalScoreMatrix,studentEmails);
 
@@ -158,7 +136,6 @@ public class MatcherService {
         Prim prim = new Prim(initGraph);
 
         while(!prim.getGraph().isEmpty()){
-
             Team newTeam = new Team();
             newTeam.setMatcher(matcher);
 
@@ -181,5 +158,4 @@ public class MatcherService {
 
         return matcherRepository.save(matcher);
     }
-
 }

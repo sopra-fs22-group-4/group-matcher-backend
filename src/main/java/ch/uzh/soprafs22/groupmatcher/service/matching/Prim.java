@@ -69,6 +69,13 @@ public class Prim {
     }
 
     public void deleteVisitedVertex() {
+        for (Vertex selectedVertex: graph){
+            if(selectedVertex.isVisited()){
+                for(Vertex counterVertex: selectedVertex.getEdges().keySet()){
+                    counterVertex.deleteEdge(selectedVertex);
+                }
+            }
+        }
         graph.removeIf(Vertex::isVisited);
     }
 

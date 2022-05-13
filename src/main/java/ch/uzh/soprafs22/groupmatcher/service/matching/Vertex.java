@@ -29,6 +29,10 @@ public class Vertex {
         }
     }
 
+    public void deleteEdge(Vertex vertex){
+        this.edges.remove(vertex);
+    }
+
     // CHECKPOINT
     public Pair<Vertex, Edge> nextMaximum(){
         Edge nextMaximum = new Edge(Integer.MIN_VALUE);

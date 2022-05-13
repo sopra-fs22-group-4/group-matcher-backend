@@ -1,6 +1,8 @@
 package ch.uzh.soprafs22.groupmatcher.service.matching;
 
+import ch.uzh.soprafs22.groupmatcher.model.Student;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.math3.linear.MatrixUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -27,6 +29,25 @@ public class DataProcessing {
         }
 
         return graph;
+    }
+
+    public double[][] calMatchingScoreTemp(List<Student> students){
+        int totalStudents = students.size();
+        double[][] scoreMatrix = new double[totalStudents][totalStudents];
+        for (int i=0; i<totalStudents; i++){
+            for (int j=1; j<totalStudents; j++){
+                if(i!=j){
+                    Student student1 = students.get(i);
+                    Student student2 = students.get(j);
+                    double matchingScore = student1.getSelectedAnswers().stream().mapToDouble(selectedAnswer ->
+                            selectedAnswer.calculateBalancedMatchingScore(student2.getId())).sum();
+                    scoreMatrix[i][j] = matchingScore;
+                }
+            }
+        }
+        double[][] scoreMatrixTranspose = MatrixUtils.createRealMatrix(scoreMatrix).transpose().getData();
+
+        return matrixAddition(scoreMatrix,scoreMatrixTranspose);
     }
 
     public double[][] calMatchingScore(double[][] answersMatrix, boolean similarityBase){
