@@ -4,6 +4,7 @@ import ch.uzh.soprafs22.groupmatcher.TestingUtils;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
+import ch.uzh.soprafs22.groupmatcher.model.Question;
 import ch.uzh.soprafs22.groupmatcher.service.AdminService;
 import ch.uzh.soprafs22.groupmatcher.service.EmailService;
 import com.google.gson.Gson;
@@ -14,6 +15,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -37,9 +41,15 @@ class AdminControllerTest {
 
     private Admin testAdmin;
 
+    private Question testQuestion;
+
+    private Matcher testMatcher;
+
     @BeforeEach
     public void setup() {
         testAdmin = TestingUtils.createAdmin();
+        testMatcher = TestingUtils.createMatcher();
+        testQuestion = TestingUtils.createQuestion(testMatcher.getQuestions().get(0).getId(), testMatcher);
     }
 
     @Test
@@ -74,6 +84,17 @@ class AdminControllerTest {
                 .andExpect(jsonPath("$.id", is(testMatcher.getId().intValue())))
                 .andExpect(jsonPath("$.university", is(testMatcher.getUniversity())))
                 .andExpect(jsonPath("$.courseName", is(testMatcher.getCourseName())));
+    }
+
+    @Test
+    void createQuestion_successful() throws Exception {
+        Question newQuestion = new Question();
+        given(adminService.getMatcherById(anyLong(),anyLong())).willReturn(testMatcher);
+        mockMvc.perform(post("/admins/{adminId}/matchers/{matcherId}/questions",
+                        testAdmin.getId(), testMatcher.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new Gson().toJson(TestingUtils.convertToDTO(newQuestion))))
+                        .andExpect(status().isCreated());
     }
 
     @Test

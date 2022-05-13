@@ -37,6 +37,8 @@ public class AdminService {
 
     private StudentRepository studentRepository;
 
+    private ModelMapper modelMapper;
+
     public Admin createAdmin(UserDTO userDTO){
         if (adminRepository.existsByEmail(userDTO.getEmail()))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with the given e-mail already exists");
@@ -112,7 +114,7 @@ public class AdminService {
 
     public Matcher updateMatcher(Long adminId, Long matcherId, MatcherDTO matcherDTO) {
         Matcher existingMatcher = getMatcherById(adminId, matcherId);
-        new ModelMapper().map(matcherDTO, existingMatcher);
+        modelMapper.map(matcherDTO, existingMatcher);
         return matcherRepository.save(existingMatcher);
     }
 
@@ -121,7 +123,7 @@ public class AdminService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No question found for the given ID"));
         if (existingQuestion.getMatcher().getAdmins().stream().noneMatch(admin -> admin.getId().equals(adminId)))
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Matchers can be edited by admins only");
-        new ModelMapper().map(questionDTO, existingQuestion);
+        modelMapper.map(questionDTO, existingQuestion);
         return questionRepository.save(existingQuestion);
     }
 
@@ -143,22 +145,6 @@ public class AdminService {
     public Admin updateAdmin(Long adminId, UserDTO admin) {
         Admin existingAdmin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No admin found for the given ID"));
-        ModelMapper modelMapper = new ModelMapper();
-
-        // we create a condition to skip mapping empty Strings, i.e. "", and enable
-        // partial profile updates
-        Condition<?, ?> isStringBlank = new AbstractCondition<Object, Object>() {
-            @Override
-            public boolean applies(MappingContext<Object, Object> context) {
-                if(context.getSource() instanceof String) {
-                    return null!=context.getSource() && !"".equals(context.getSource());
-                } else {
-                    return context.getSource() != null;
-                }
-            }
-        };
-
-        modelMapper.getConfiguration().setSkipNullEnabled(true).setPropertyCondition(isStringBlank);
         modelMapper.map(admin, existingAdmin);
         return adminRepository.save(existingAdmin);
     }

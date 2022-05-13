@@ -70,6 +70,7 @@ public class AdminController {
     }
 
     @PostMapping("/admins/{adminId}/matchers/{matcherId}/questions")
+    @ResponseStatus(HttpStatus.CREATED)
     public Matcher createQuestion(@PathVariable Long adminId, @PathVariable Long matcherId, @RequestBody QuestionDTO newQuestion) {
         return adminService.createQuestion(adminId, matcherId, newQuestion);
     }
