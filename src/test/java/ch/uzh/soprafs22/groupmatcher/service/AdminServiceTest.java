@@ -1,6 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
+import ch.uzh.soprafs22.groupmatcher.config.AppConfig;
 import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
@@ -28,7 +29,7 @@ import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest(classes = {AdminService.class})
+@SpringBootTest(classes = {AdminService.class, AppConfig.class})
 class AdminServiceTest {
 
     @MockBean
@@ -50,10 +51,20 @@ class AdminServiceTest {
 
     private Admin testAdmin;
 
+    private Matcher testMatcher;
+
+    private MatcherDTO testMatcherDTO;
+
+    private Question testQuestion;
+
+    private QuestionDTO testQuestionDTO;
+
     @BeforeEach
     public void setup() {
         testAdmin = TestingUtils.createAdmin();
         testUserDTO = TestingUtils.convertToDTO(testAdmin);
+        testMatcher = TestingUtils.createMatcher();
+        testMatcherDTO = TestingUtils.convertToDTO(testMatcher);
         given(adminRepository.save(any(Admin.class))).willAnswer(returnsFirstArg());
         given(matcherRepository.save(any(Matcher.class))).willAnswer(returnsFirstArg());
     }
@@ -165,5 +176,99 @@ class AdminServiceTest {
         assertEquals(testQuestionDTO.getAnswers(), createdQuestion.getAnswers().stream().map(Answer::getContent).toList());
 
 
+    }
+
+    @Test
+    void updateAdminWithValidInputs() {
+        testAdmin.setEmail("test@email.com");
+        testAdmin.setId(1L);
+        testAdmin.setName("Tester");
+        given(adminRepository.findById(testAdmin.getId())).willReturn(Optional.of(testAdmin));
+        testUserDTO.setEmail("new@email.com");
+        testUserDTO.setName("New Tester");
+        testUserDTO.setPassword("test12");
+        adminService.updateAdmin(testAdmin.getId(), testUserDTO);
+        assertEquals(testUserDTO.getEmail(), testAdmin.getEmail());
+        assertEquals(testUserDTO.getName(), testAdmin.getName());
+        assertEquals(testUserDTO.getPassword(), testAdmin.getPassword());
+    }
+
+    @Test
+    void updateAdminWithEmptyDTOStrings() {
+        testUserDTO.setName("");
+        testUserDTO.setEmail("");
+        testUserDTO.setPassword("");
+        String testAdminName = testAdmin.getName();
+        String testAdminEmail = testAdmin.getEmail();
+        String testAdminPassword = testAdmin.getPassword();
+        given(adminRepository.findById(testAdmin.getId())).willReturn(Optional.of(testAdmin));
+        adminService.updateAdmin(testAdmin.getId(), testUserDTO);
+        assertEquals(testAdminName, testAdmin.getName());
+        assertEquals(testAdminEmail, testAdmin.getEmail());
+        assertEquals(testAdminPassword, testAdmin.getPassword());
+    }
+
+    @Test
+    void updateMatcherWithValidInputs() {
+        testMatcherDTO.setGroupSize(5);
+        testMatcherDTO.setDescription("This is a new course");
+        testMatcherDTO.setUniversity("ETH");
+        testMatcherDTO.setCourseName("Testing Matchers");
+        String testMatcherDTODescription = testMatcherDTO.getDescription();
+        Integer testMatcherDTOGroupSize= testMatcherDTO.getGroupSize();
+        String testMatcherDTODUniversity = testMatcherDTO.getUniversity();
+        String testMatcherDTODCourseName = testMatcherDTO.getCourseName();
+        testMatcher.getAdmins().add(testAdmin);
+        testAdmin.getMatchers().add(testMatcher);
+        given(matcherRepository.findById(testMatcher.getId())).willReturn(Optional.of(testMatcher));
+        adminService.updateMatcher(testAdmin.getId(), testMatcher.getId(), testMatcherDTO);
+        assertEquals(testMatcherDTODescription, adminService.getMatcherById(testAdmin.getId(), testMatcher.getId()).getDescription());
+        assertEquals(testMatcherDTODUniversity, adminService.getMatcherById(testAdmin.getId(), testMatcher.getId()).getUniversity());
+        assertEquals(testMatcherDTOGroupSize, adminService.getMatcherById(testAdmin.getId(), testMatcher.getId()).getGroupSize());
+        assertEquals(testMatcherDTODCourseName, adminService.getMatcherById(testAdmin.getId(), testMatcher.getId()).getCourseName());
+    }
+
+    @Test
+    void updateNonExistingQuestionID() {
+        Question testQuestion = new Question();
+        Long adminId = testMatcher.getAdmins().get(0).getId();
+        Long questionId = testQuestion.getId();
+        assertThrows(ResponseStatusException.class, () -> adminService.updateQuestion(adminId, questionId, testQuestionDTO));
+    }
+
+    @Test
+    void updateQuestionAsNonAdmin() {
+        Admin admin = new Admin();
+        Long adminId = admin.getId();
+        given(matcherRepository.findById(testMatcher.getId())).willReturn(Optional.of(testMatcher));
+        Long questionId = testMatcher.getQuestions().get(0).getId();
+        given(questionRepository.findById(questionId)).willReturn(Optional.of(testMatcher.getQuestions().get(0)));
+        assertThrows(ResponseStatusException.class, () -> adminService.updateQuestion(adminId, questionId, testQuestionDTO));
+    }
+
+    @Test
+    void accessMatcherAsNonAdmin() {
+        Admin admin = new Admin();
+        Long adminId = admin.getId();
+        given(matcherRepository.findById(testMatcher.getId())).willReturn(Optional.of(testMatcher));
+        Long matcherId = testMatcher.getId();
+        assertThrows(ResponseStatusException.class, () -> adminService.getMatcherById(adminId, matcherId));
+    }
+
+    @Test
+    void createQuestionAfterMatcherIsPublished() {
+        given(matcherRepository.findById(testMatcher.getId())).willReturn(Optional.of(testMatcher));
+        Long adminId = testMatcher.getAdmins().get(0).getId();
+        Long matcherId = testMatcher.getId();
+        assertThrows(ResponseStatusException.class, () -> adminService.createQuestion(adminId, matcherId, testQuestionDTO));
+    }
+
+    @Test
+    void loginWithNonValidatedAccount() {
+        given(adminRepository.findByEmailAndPassword(testAdmin.getEmail(), testAdmin.getPassword())).willReturn(Optional.of(testAdmin));
+        testAdmin.setVerified(false);
+        testUserDTO.setEmail(testAdmin.getEmail());
+        testUserDTO.setPassword(testAdmin.getPassword());
+        assertThrows(ResponseStatusException.class, () -> adminService.validateLogin(testUserDTO));
     }
 }

@@ -34,6 +34,8 @@ public class AdminService {
 
     private StudentRepository studentRepository;
 
+    private ModelMapper modelMapper;
+
     public Admin createAdmin(UserDTO userDTO){
         if (adminRepository.existsByEmail(userDTO.getEmail()))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with the given e-mail already exists");
@@ -109,7 +111,7 @@ public class AdminService {
 
     public Matcher updateMatcher(Long adminId, Long matcherId, MatcherDTO matcherDTO) {
         Matcher existingMatcher = getMatcherById(adminId, matcherId);
-        new ModelMapper().map(matcherDTO, existingMatcher);
+        modelMapper.map(matcherDTO, existingMatcher);
         return matcherRepository.save(existingMatcher);
     }
 
@@ -118,7 +120,7 @@ public class AdminService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No question found for the given ID"));
         if (existingQuestion.getMatcher().getAdmins().stream().noneMatch(admin -> admin.getId().equals(adminId)))
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Matchers can be edited by admins only");
-        new ModelMapper().map(questionDTO, existingQuestion);
+        modelMapper.map(questionDTO, existingQuestion);
         return questionRepository.save(existingQuestion);
     }
 
@@ -135,5 +137,12 @@ public class AdminService {
         getMatcherById(adminId, matcherId); // Verify the admin can access the matcher
         return studentRepository.findByMatcher_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(
                 matcherId, Pageable.ofSize(10));
+    }
+
+    public Admin updateAdmin(Long adminId, UserDTO admin) {
+        Admin existingAdmin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No admin found for the given ID"));
+        modelMapper.map(admin, existingAdmin);
+        return adminRepository.save(existingAdmin);
     }
 }

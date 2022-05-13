@@ -70,6 +70,7 @@ public class AdminController {
     }
 
     @PostMapping("/admins/{adminId}/matchers/{matcherId}/questions")
+    @ResponseStatus(HttpStatus.CREATED)
     public Matcher createQuestion(@PathVariable Long adminId, @PathVariable Long matcherId, @RequestBody QuestionDTO newQuestion) {
         return adminService.createQuestion(adminId, matcherId, newQuestion);
     }
@@ -87,5 +88,10 @@ public class AdminController {
     @PutMapping("/admins/{adminId}/questions/{questionId}")
     public Question updateQuestion(@PathVariable Long adminId, @PathVariable Long questionId, @RequestBody QuestionDTO updatedQuestion) {
         return adminService.updateQuestion(adminId, questionId, updatedQuestion);
+    }
+
+    @PutMapping("/admins/{adminId}/profile")
+    public Admin updateProfile(@PathVariable long adminId, @RequestBody UserDTO admin) {
+        return adminService.updateAdmin(adminId, admin);
     }
 }
