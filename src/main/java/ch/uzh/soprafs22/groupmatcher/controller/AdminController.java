@@ -88,4 +88,9 @@ public class AdminController {
     public Question updateQuestion(@PathVariable Long adminId, @PathVariable Long questionId, @RequestBody QuestionDTO updatedQuestion) {
         return adminService.updateQuestion(adminId, questionId, updatedQuestion);
     }
+
+    @PutMapping("/admins/{adminId}/profile")
+    public Admin updateProfile(@PathVariable long adminId, @RequestBody UserDTO admin) {
+        return adminService.updateAdmin(adminId, admin);
+    }
 }

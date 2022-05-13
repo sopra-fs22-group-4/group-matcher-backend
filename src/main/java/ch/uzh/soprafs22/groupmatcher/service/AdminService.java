@@ -12,7 +12,10 @@ import ch.uzh.soprafs22.groupmatcher.repository.QuestionRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.AbstractCondition;
+import org.modelmapper.Condition;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.spi.MappingContext;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -135,5 +138,28 @@ public class AdminService {
         getMatcherById(adminId, matcherId); // Verify the admin can access the matcher
         return studentRepository.findByMatcher_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(
                 matcherId, Pageable.ofSize(10));
+    }
+
+    public Admin updateAdmin(Long adminId, UserDTO admin) {
+        Admin existingAdmin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No admin found for the given ID"));
+        ModelMapper modelMapper = new ModelMapper();
+
+        // we create a condition to skip mapping empty Strings, i.e. "", and enable
+        // partial profile updates
+        Condition<?, ?> isStringBlank = new AbstractCondition<Object, Object>() {
+            @Override
+            public boolean applies(MappingContext<Object, Object> context) {
+                if(context.getSource() instanceof String) {
+                    return null!=context.getSource() && !"".equals(context.getSource());
+                } else {
+                    return context.getSource() != null;
+                }
+            }
+        };
+
+        modelMapper.getConfiguration().setSkipNullEnabled(true).setPropertyCondition(isStringBlank);
+        modelMapper.map(admin, existingAdmin);
+        return adminRepository.save(existingAdmin);
     }
 }
