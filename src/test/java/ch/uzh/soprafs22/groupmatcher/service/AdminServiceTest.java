@@ -55,8 +55,6 @@ class AdminServiceTest {
 
     private MatcherDTO testMatcherDTO;
 
-    private Question testQuestion;
-
     private QuestionDTO testQuestionDTO;
 
     @BeforeEach
@@ -65,6 +63,7 @@ class AdminServiceTest {
         testUserDTO = TestingUtils.convertToDTO(testAdmin);
         testMatcher = TestingUtils.createMatcher();
         testMatcherDTO = TestingUtils.convertToDTO(testMatcher);
+        testQuestionDTO = TestingUtils.convertToDTO(testMatcher.getQuestions().get(0));
         given(adminRepository.save(any(Admin.class))).willAnswer(returnsFirstArg());
         given(matcherRepository.save(any(Matcher.class))).willAnswer(returnsFirstArg());
     }
