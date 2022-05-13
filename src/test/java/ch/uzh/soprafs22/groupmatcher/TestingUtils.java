@@ -3,6 +3,8 @@ package ch.uzh.soprafs22.groupmatcher;
 import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionCategory;
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
+import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
+import ch.uzh.soprafs22.groupmatcher.dto.QuestionDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.*;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherOverview;
@@ -100,5 +102,25 @@ public class TestingUtils {
         userDTO.setName("Test Student");
         userDTO.setEmail(student.getEmail());
         return userDTO;
+    }
+
+    public static MatcherDTO convertToDTO(Matcher matcher) {
+        MatcherDTO matcherDTO = new MatcherDTO();
+        matcherDTO.setCourseName(matcher.getCourseName());
+        matcherDTO.setUniversity(matcher.getUniversity());
+        matcherDTO.setDescription(matcher.getDescription());
+        matcherDTO.setPublishDate(matcher.getPublishDate());
+        matcherDTO.setDueDate(matcher.getDueDate());
+        matcherDTO.setGroupSize(matcher.getGroupSize());
+        return matcherDTO;
+    }
+
+    public static QuestionDTO convertToDTO(Question question) {
+        QuestionDTO questionDTO = new QuestionDTO();
+        questionDTO.setOrdinalNum(question.getOrdinalNum());
+        questionDTO.setContent(question.getContent());
+        questionDTO.setWeight(question.getWeight());
+        questionDTO.setQuestionType(question.getQuestionType());
+        return questionDTO;
     }
 }
