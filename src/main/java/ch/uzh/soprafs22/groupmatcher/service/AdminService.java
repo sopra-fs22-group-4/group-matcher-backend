@@ -118,6 +118,11 @@ public class AdminService {
         return matcherRepository.save(existingMatcher);
     }
 
+    public void deleteMatcher(Long adminId, Long matcherId) {
+        Matcher existingMatcher = getMatcherById(adminId, matcherId);
+        matcherRepository.delete(existingMatcher);
+    }
+
     public Question updateQuestion(Long adminId, Long questionId, QuestionDTO questionDTO) {
         Question existingQuestion = questionRepository.findById(questionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No question found for the given ID"));

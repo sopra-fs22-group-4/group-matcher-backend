@@ -74,6 +74,11 @@ public class AdminController {
         return adminService.updateMatcher(adminId, matcherId, updatedMatcher);
     }
 
+    @DeleteMapping("/admins/{adminId}/matchers/{matcherId}")
+    public void deleteMatcher(@PathVariable Long adminId, @PathVariable Long matcherId) {
+        adminService.deleteMatcher(adminId, matcherId);
+    }
+
     @PostMapping("/admins/{adminId}/matchers/{matcherId}/questions")
     @ResponseStatus(HttpStatus.CREATED)
     public Matcher createQuestion(@PathVariable Long adminId, @PathVariable Long matcherId, @RequestBody QuestionDTO newQuestion) {
