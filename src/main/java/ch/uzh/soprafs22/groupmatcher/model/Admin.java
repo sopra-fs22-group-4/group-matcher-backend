@@ -20,7 +20,6 @@ public class Admin {
     private String email;
 
     @JsonIgnore
-    @Column(nullable = false)
     private String password;
 
     private String name;
@@ -29,6 +28,6 @@ public class Admin {
     private boolean verified = false;
 
     @JsonIgnore
-    @ManyToMany(mappedBy = "admins",cascade = CascadeType.ALL)
+    @ManyToMany(mappedBy = "collaborators",cascade = CascadeType.ALL)
     private Set<Matcher> matchers  = new LinkedHashSet<>();
 }

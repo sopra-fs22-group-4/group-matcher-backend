@@ -36,7 +36,6 @@ public class Matcher {
     @Enumerated(EnumType.STRING)
     private Status status = Status.DRAFT;
 
-    @JsonIgnore
     @Enumerated(EnumType.STRING)
     private MatchingStrategy matchingStrategy;
 
@@ -49,7 +48,7 @@ public class Matcher {
     @JoinTable(name = "matcher_admins",
             joinColumns = @JoinColumn(name = "matcher_id"),
             inverseJoinColumns = @JoinColumn(name = "admins_id"))
-    private List<Admin> admins = new ArrayList<>();
+    private List<Admin> collaborators = new ArrayList<>();
 
     @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
     private List<Student> students = new ArrayList<>();

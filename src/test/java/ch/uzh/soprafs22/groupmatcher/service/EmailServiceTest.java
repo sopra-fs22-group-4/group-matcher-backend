@@ -1,6 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
+import ch.uzh.soprafs22.groupmatcher.config.AppConfig;
 import ch.uzh.soprafs22.groupmatcher.constant.Status;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
@@ -32,7 +33,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
-@SpringBootTest(classes = {EmailService.class, SpringTemplateEngine.class})
+@SpringBootTest(classes = {EmailService.class, AppConfig.class})
 class EmailServiceTest {
 
     @Autowired
@@ -84,7 +85,7 @@ class EmailServiceTest {
         MimeMessage sentEmail = messageCaptor.getValue();
         assertEquals(List.of(testAdmin.getEmail()), Arrays.stream(sentEmail.getAllRecipients()).map(Address::toString).toList());
         Multipart sentEmailParts = (Multipart) sentEmail.getContent();
-        assertEquals("email_verification.html", sentEmailParts.getBodyPart(0).getContent());
+        assertTrue(sentEmailParts.getBodyPart(0).getContent().toString().contains("Welcome to groupmatcher!"));
         assertEquals("<bg.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(1)).getContentID());
         assertEquals("<logo.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(2)).getContentID());
         assertEquals("Verify Account", sentEmail.getSubject());
@@ -103,7 +104,7 @@ class EmailServiceTest {
         MimeMessage sentEmail = messageCaptor.getValue();
         assertEquals(List.of(testStudent.getEmail(),testStudent1.getEmail(),testStudent2.getEmail()), Arrays.stream(sentEmail.getAllRecipients()).map(Address::toString).toList());
         Multipart sentEmailParts = (Multipart) sentEmail.getContent();
-        assertEquals("reminder.html", sentEmailParts.getBodyPart(0).getContent());
+        assertTrue(sentEmailParts.getBodyPart(0).getContent().toString().contains("Reminder!"));
         assertEquals("<bg.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(1)).getContentID());
         assertEquals("<logo.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(2)).getContentID());
         assertEquals("Reminder", sentEmail.getSubject());
@@ -129,7 +130,7 @@ class EmailServiceTest {
                 Arrays.stream(sentEmail.getAllRecipients()).map(Address::toString).toList());
         Multipart sentEmailParts = (Multipart) sentEmail.getContent();
         assertEquals("Group Introduction", sentEmail.getSubject());
-        assertEquals("matching_results.html", sentEmailParts.getBodyPart(0).getContent());
+        assertTrue(sentEmailParts.getBodyPart(0).getContent().toString().contains("Here are your results!"));
         assertEquals("<bg.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(1)).getContentID());
         assertEquals("<logo.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(2)).getContentID());
     }

@@ -22,8 +22,6 @@ public class Question {
 
     private String content;
 
-    private Double weight;
-
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private QuestionType questionType = QuestionType.SINGLE_CHOICE;

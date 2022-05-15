@@ -75,6 +75,12 @@ public class EmailService {
         mailSender.send(composeMessage("Verify Response", "email_verification.html", variables, student.getEmail()));
     }
 
+    public void sendCollaboratorInviteEmail(Admin admin) {
+        log.info("Inviting {}", admin.getEmail());
+//        Map<String, Object> variables = Map.of("name", admin.getName());
+//        mailSender.send(composeMessage("You are invited!", "collaborator_invite.html", variables, admin.getEmail()));
+    }
+
     public List<Matcher> sendMatchedGroupNotificationEmail() {
         return matcherRepository.findByStatus(Status.MATCHED).stream().map(matcher -> {
             matcher.getTeams().forEach(team -> {

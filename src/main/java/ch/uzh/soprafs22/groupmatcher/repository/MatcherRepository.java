@@ -14,7 +14,7 @@ public interface MatcherRepository extends JpaRepository<Matcher, Long> {
 
     Optional<MatcherOverview> findMatcherById(Long matcherId);
 
-    List<MatcherAdminOverview> findByAdmins_IdOrderByDueDateDesc(Long adminId);
+    List<MatcherAdminOverview> findByCollaborators_IdOrderByDueDateDesc(Long adminId);
 
     List<Matcher> findByPublishDateIsBeforeAndStatus(ZonedDateTime sendAt, Status status);
 

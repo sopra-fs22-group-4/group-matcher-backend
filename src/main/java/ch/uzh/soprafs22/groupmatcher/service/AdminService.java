@@ -39,7 +39,7 @@ public class AdminService {
     public Admin createAdmin(UserDTO userDTO){
         if (adminRepository.existsByEmail(userDTO.getEmail()))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with the given e-mail already exists");
-        Admin newAdmin = new ModelMapper().map(userDTO, Admin.class);
+        Admin newAdmin = modelMapper.map(userDTO, Admin.class);
         return adminRepository.save(newAdmin);
     }
 
@@ -63,8 +63,11 @@ public class AdminService {
     public Matcher createMatcher(Long adminId, MatcherDTO matcherDTO) {
         Admin storedAdmin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No account found for the given ID"));
-        Matcher newMatcher = new ModelMapper().map(matcherDTO, Matcher.class);
-        newMatcher.getAdmins().add(storedAdmin);
+        Matcher newMatcher = modelMapper.map(matcherDTO, Matcher.class);
+        newMatcher.getCollaborators().add(storedAdmin);
+        matcherDTO.getCollaborators().forEach(collaborator ->
+                newMatcher.getCollaborators().add(adminRepository.findByEmail(collaborator.getEmail())
+                        .orElse(modelMapper.map(collaborator, Admin.class))));
         return matcherRepository.save(newMatcher);
     }
 
@@ -72,7 +75,7 @@ public class AdminService {
         Matcher storedMatcher = getMatcherById(adminId, matcherId);
         if (storedMatcher.isPublished())
             throw new ResponseStatusException(HttpStatus.METHOD_NOT_ALLOWED, "Matchers cannot be edited after publication");
-        Question newQuestion = new ModelMapper().map(questionDTO, Question.class);
+        Question newQuestion = modelMapper.map(questionDTO, Question.class);
         if (!newQuestion.getContent().endsWith("?"))
             newQuestion.setContent(newQuestion.getContent() + "?");
         newQuestion.setMatcher(storedMatcher);
@@ -91,7 +94,7 @@ public class AdminService {
     public Matcher getMatcherById(Long adminId, Long matcherId) {
         Matcher storedMather = matcherRepository.findById(matcherId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No matcher found for the given ID"));
-        if (storedMather.getAdmins().stream().noneMatch(admin -> admin.getId().equals(adminId)))
+        if (storedMather.getCollaborators().stream().noneMatch(admin -> admin.getId().equals(adminId)))
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Matcher information is available for admins only");
         return storedMather;
     }
@@ -118,18 +121,18 @@ public class AdminService {
     public Question updateQuestion(Long adminId, Long questionId, QuestionDTO questionDTO) {
         Question existingQuestion = questionRepository.findById(questionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No question found for the given ID"));
-        if (existingQuestion.getMatcher().getAdmins().stream().noneMatch(admin -> admin.getId().equals(adminId)))
+        if (existingQuestion.getMatcher().getCollaborators().stream().noneMatch(admin -> admin.getId().equals(adminId)))
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Matchers can be edited by admins only");
         modelMapper.map(questionDTO, existingQuestion);
         return questionRepository.save(existingQuestion);
     }
 
     public List<MatcherAdminOverview> getMatchersByAdminId(Long adminId) {
-        return matcherRepository.findByAdmins_IdOrderByDueDateDesc(adminId);
+        return matcherRepository.findByCollaborators_IdOrderByDueDateDesc(adminId);
     }
 
     public List<Submission> getLatestSubmissionsByAdminId(Long adminId) {
-        return studentRepository.findByMatcher_Admins_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(
+        return studentRepository.findByMatcher_Collaborators_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(
                 adminId, Pageable.ofSize(10));
     }
 

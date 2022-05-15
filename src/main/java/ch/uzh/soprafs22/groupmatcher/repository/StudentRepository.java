@@ -14,7 +14,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
     boolean existsByMatcherIdAndEmail(Long matcherId, String email);
 
-    List<Submission> findByMatcher_Admins_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(Long adminId, Pageable pageable);
+    List<Submission> findByMatcher_Collaborators_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(Long adminId, Pageable pageable);
 
     List<Submission> findByMatcher_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(Long matcherId, Pageable pageable);
 

@@ -45,10 +45,10 @@ class StudentRepositoryTest {
     @Test
     void findLatestSubmissionByAdminId_empty() {
         Admin testAdmin = TestingUtils.createAdmin(null, testMatcher);
-        testMatcher.getAdmins().add(testAdmin);
+        testMatcher.getCollaborators().add(testAdmin);
         Admin storedAdmin = adminRepository.save(testAdmin);
         storedAdmin.getMatchers().forEach(matcher -> matcher.getStudents().forEach(student -> assertNull(student.getSubmissionTimestamp())));
-        assertTrue(studentRepository.findByMatcher_Admins_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(
+        assertTrue(studentRepository.findByMatcher_Collaborators_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(
                 testAdmin.getId(), Pageable.ofSize(10)).isEmpty());
     }
 
@@ -58,11 +58,11 @@ class StudentRepositoryTest {
         testMatcher.getStudents().forEach(student -> student.setSubmissionTimestamp(
                 ZonedDateTime.now().minus(counter.getAndIncrement(), ChronoUnit.HOURS)));
         Admin testAdmin = TestingUtils.createAdmin(null, testMatcher);
-        testMatcher.getAdmins().add(testAdmin);
+        testMatcher.getCollaborators().add(testAdmin);
         Admin storedAdmin = adminRepository.save(testAdmin);
         List<Student> expectedStudents = storedAdmin.getMatchers().stream().map(matcher -> matcher.getStudents()
                         .stream().sorted(Comparator.comparing(Student::getSubmissionTimestamp).reversed()).toList()).toList().get(0);
-        List<Submission> testSubmissions = studentRepository.findByMatcher_Admins_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(
+        List<Submission> testSubmissions = studentRepository.findByMatcher_Collaborators_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(
                 storedAdmin.getId(), Pageable.ofSize(10));
         assertEquals(expectedStudents.size(), testSubmissions.size());
         IntStream.range(0, expectedStudents.size()).forEach(index -> {

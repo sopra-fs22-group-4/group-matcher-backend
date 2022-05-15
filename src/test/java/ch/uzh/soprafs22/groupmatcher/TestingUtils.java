@@ -68,7 +68,7 @@ public class TestingUtils {
         matcher.setPublishDate(ZonedDateTime.now().minus(2, ChronoUnit.MINUTES));
         matcher.setDueDate(ZonedDateTime.now().plus(7, ChronoUnit.DAYS));
         matcher.setGroupSize(3);
-        matcher.getAdmins().add(createAdmin(2L, matcher));
+        matcher.getCollaborators().add(createAdmin(2L, matcher));
         Question question1 = createQuestion(10L,  matcher);
         question1.getAnswers().add(createAnswer(11L, question1));
         question1.getAnswers().add(createAnswer(12L, question1));
@@ -119,7 +119,6 @@ public class TestingUtils {
         QuestionDTO questionDTO = new QuestionDTO();
         questionDTO.setOrdinalNum(question.getOrdinalNum());
         questionDTO.setContent(question.getContent());
-        questionDTO.setWeight(question.getWeight());
         questionDTO.setQuestionType(question.getQuestionType());
         return questionDTO;
     }

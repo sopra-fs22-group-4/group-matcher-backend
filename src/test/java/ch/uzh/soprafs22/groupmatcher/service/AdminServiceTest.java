@@ -152,7 +152,7 @@ class AdminServiceTest {
         List<String> newStudents = List.of("new-student-1@test.com", "new-student-2@test.com");
         given(matcherRepository.findById(testMatcher.getId())).willReturn(Optional.of(testMatcher));
         given(studentRepository.existsByMatcherIdAndEmail(anyLong(), anyString())).willReturn(false);
-        Matcher storedMatcher = adminService.addNewStudents(testMatcher.getAdmins().get(0).getId(), testMatcher.getId(), newStudents);
+        Matcher storedMatcher = adminService.addNewStudents(testMatcher.getCollaborators().get(0).getId(), testMatcher.getId(), newStudents);
         assertEquals(numStudents + newStudents.size(), storedMatcher.getStudents().size());
     }
 
@@ -166,13 +166,12 @@ class AdminServiceTest {
         testQuestionDTO.setAnswers(List.of("Test Answer 1", "Test Answer 2"));
         int numQuestions = testMatcher.getQuestions().size();
         given(matcherRepository.findById(testMatcher.getId())).willReturn(Optional.of(testMatcher));
-        Matcher storedMatcher = adminService.createQuestion(testMatcher.getAdmins().get(0).getId(), testMatcher.getId(), testQuestionDTO);
+        Matcher storedMatcher = adminService.createQuestion(testMatcher.getCollaborators().get(0).getId(), testMatcher.getId(), testQuestionDTO);
         assertEquals(numQuestions + 1, testMatcher.getQuestions().size());
         Question createdQuestion = storedMatcher.getQuestions().get(numQuestions);
         assertEquals(testMatcher.getId(), createdQuestion.getMatcher().getId());
         assertEquals(testQuestionDTO.getContent()+"?", createdQuestion.getContent());
         assertEquals(testQuestionDTO.getQuestionType(), createdQuestion.getQuestionType());
-        assertEquals(testQuestionDTO.getWeight(), createdQuestion.getWeight());
         assertEquals(testQuestionDTO.getAnswers(), createdQuestion.getAnswers().stream().map(Answer::getContent).toList());
 
 
@@ -218,7 +217,7 @@ class AdminServiceTest {
         Integer testMatcherDTOGroupSize= testMatcherDTO.getGroupSize();
         String testMatcherDTODUniversity = testMatcherDTO.getUniversity();
         String testMatcherDTODCourseName = testMatcherDTO.getCourseName();
-        testMatcher.getAdmins().add(testAdmin);
+        testMatcher.getCollaborators().add(testAdmin);
         testAdmin.getMatchers().add(testMatcher);
         given(matcherRepository.findById(testMatcher.getId())).willReturn(Optional.of(testMatcher));
         adminService.updateMatcher(testAdmin.getId(), testMatcher.getId(), testMatcherDTO);
@@ -231,7 +230,7 @@ class AdminServiceTest {
     @Test
     void updateNonExistingQuestionID() {
         Question testQuestion = new Question();
-        Long adminId = testMatcher.getAdmins().get(0).getId();
+        Long adminId = testMatcher.getCollaborators().get(0).getId();
         Long questionId = testQuestion.getId();
         assertThrows(ResponseStatusException.class, () -> adminService.updateQuestion(adminId, questionId, testQuestionDTO));
     }
@@ -258,7 +257,7 @@ class AdminServiceTest {
     @Test
     void createQuestionAfterMatcherIsPublished() {
         given(matcherRepository.findById(testMatcher.getId())).willReturn(Optional.of(testMatcher));
-        Long adminId = testMatcher.getAdmins().get(0).getId();
+        Long adminId = testMatcher.getCollaborators().get(0).getId();
         Long matcherId = testMatcher.getId();
         assertThrows(ResponseStatusException.class, () -> adminService.createQuestion(adminId, matcherId, testQuestionDTO));
     }

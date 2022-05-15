@@ -4,9 +4,9 @@ import ch.uzh.soprafs22.groupmatcher.TestingUtils;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
-import ch.uzh.soprafs22.groupmatcher.model.Question;
 import ch.uzh.soprafs22.groupmatcher.service.AdminService;
 import ch.uzh.soprafs22.groupmatcher.service.EmailService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,15 +38,12 @@ class AdminControllerTest {
 
     private Admin testAdmin;
 
-    private Question testQuestion;
-
     private Matcher testMatcher;
 
     @BeforeEach
     public void setup() {
         testAdmin = TestingUtils.createAdmin();
         testMatcher = TestingUtils.createMatcher();
-        testQuestion = TestingUtils.createQuestion(testMatcher.getQuestions().get(0).getId(), testMatcher);
     }
 
     @Test
@@ -96,12 +93,12 @@ class AdminControllerTest {
 
     @Test
     void createQuestion_successful() throws Exception {
-        Question newQuestion = new Question();
         given(adminService.getMatcherById(anyLong(),anyLong())).willReturn(testMatcher);
         mockMvc.perform(post("/admins/{adminId}/matchers/{matcherId}/questions",
                         testAdmin.getId(), testMatcher.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new Gson().toJson(TestingUtils.convertToDTO(newQuestion))))
+                        .content(new ObjectMapper().writeValueAsString(
+                                TestingUtils.convertToDTO(testMatcher.getQuestions().get(0)))))
                 .andExpect(status().isCreated());
     }
 }

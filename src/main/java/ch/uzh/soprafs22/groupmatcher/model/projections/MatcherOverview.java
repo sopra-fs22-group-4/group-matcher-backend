@@ -1,5 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.model.projections;
 
+import ch.uzh.soprafs22.groupmatcher.constant.Status;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.rest.core.config.Projection;
@@ -20,7 +21,7 @@ public interface MatcherOverview {
 
     ZonedDateTime getDueDate();
 
-    boolean isActive();
+    Status getStatus();
 
     @Value("#{target.published}")
     boolean isPublished();
