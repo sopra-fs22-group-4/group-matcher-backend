@@ -6,6 +6,7 @@ import ch.uzh.soprafs22.groupmatcher.controller.MatcherController;
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
+import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherAdminOverview;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,9 +58,9 @@ class ApplicationTests {
         testMatcherDTO.setPublishDate(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
         testMatcherDTO.setPublishDate(ZonedDateTime.now().plus(3, ChronoUnit.DAYS));
         testMatcherDTO.setGroupSize(5);
-        Long createdMatcherId = adminController.createMatcher(storedAdmin.getId(), testMatcherDTO);
+        Matcher createdMatcher = adminController.createMatcher(storedAdmin.getId(), testMatcherDTO);
         List<MatcherAdminOverview> matchers = adminController.getMatchers(storedAdmin.getId());
         assertEquals(1, matchers.size());
-        assertEquals(createdMatcherId, matchers.get(0).getId());
+        assertEquals(createdMatcher.getId(), matchers.get(0).getId());
     }
 }

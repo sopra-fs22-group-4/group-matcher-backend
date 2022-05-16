@@ -45,13 +45,13 @@ public class AdminController {
 
     @PostMapping("/admins/{adminId}/matchers")
     @ResponseStatus(HttpStatus.CREATED)
-    public Long createMatcher(@PathVariable Long adminId, @RequestBody MatcherDTO newMatcher) {
+    public Matcher createMatcher(@PathVariable Long adminId, @RequestBody MatcherDTO newMatcher) {
         Matcher createdMatcher = adminService.createMatcher(adminId, newMatcher);
         createdMatcher.getCollaborators().forEach(collaborator -> {
             if (Strings.isNullOrEmpty(collaborator.getPassword()))
                 emailService.sendCollaboratorInviteEmail(collaborator);
         });
-        return createdMatcher.getId();
+        return createdMatcher;
     }
 
     @GetMapping("/admins/{adminId}/matchers")
@@ -95,9 +95,14 @@ public class AdminController {
         return adminService.addNewStudents(adminId, matcherId, studentEmails);
     }
 
-    @PutMapping("/admins/{adminId}/questions/{questionId}")
+    @PostMapping("/admins/{adminId}/questions/{questionId}")
     public Question updateQuestion(@PathVariable Long adminId, @PathVariable Long questionId, @RequestBody QuestionDTO updatedQuestion) {
         return adminService.updateQuestion(adminId, questionId, updatedQuestion);
+    }
+
+    @DeleteMapping("/admins/{adminId}/questions/{questionId}")
+    public void deleteQuestion(@PathVariable Long adminId, @PathVariable Long questionId) {
+        adminService.deleteQuestion(adminId, questionId);
     }
 
     @PutMapping("/admins/{adminId}/profile")

@@ -57,6 +57,9 @@ public class Matcher {
     @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
     private List<Team> teams = new ArrayList<>();
 
+    @OneToMany(mappedBy = "matcher", cascade = CascadeType.ALL)
+    private List<Notification> notifications = new ArrayList<>();
+
     public boolean isPublished() {
         return publishDate.isBefore(ZonedDateTime.now());
     }
