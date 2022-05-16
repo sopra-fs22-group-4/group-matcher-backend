@@ -49,6 +49,13 @@ public class AdminService {
         return matcherRepository.save(matcher);
     }
 
+    private Matcher addCollaborators(Matcher matcher, List<UserDTO> collaborators) {
+        collaborators.forEach(collaborator ->
+                matcher.getCollaborators().add(adminRepository.findByEmail(collaborator.getEmail())
+                        .orElse(modelMapper.map(collaborator, Admin.class))));
+        return matcher;
+    }
+
     private Admin getAdminById(Long adminId) {
         return adminRepository.findById(adminId).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "No account found for the given ID"));
@@ -98,9 +105,7 @@ public class AdminService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No account found for the given ID"));
         Matcher newMatcher = modelMapper.map(matcherDTO, Matcher.class);
         newMatcher.getCollaborators().add(storedAdmin);
-        matcherDTO.getCollaborators().forEach(collaborator ->
-                newMatcher.getCollaborators().add(adminRepository.findByEmail(collaborator.getEmail())
-                        .orElse(modelMapper.map(collaborator, Admin.class))));
+        addCollaborators(newMatcher, matcherDTO.getCollaborators());
         return matcherRepository.save(newMatcher);
     }
 
@@ -124,22 +129,18 @@ public class AdminService {
         return notifyAndSave(storedMatcher, adminId, " created a new question");
     }
 
-    public Matcher addNewStudents(Long adminId, Long matcherId, List<String> studentEmails) {
-        Matcher storedMatcher = getMatcherById(adminId, matcherId);
-        studentEmails.stream()
+    public Matcher updateMatcher(Long adminId, Long matcherId, MatcherDTO matcherDTO) {
+        Matcher existingMatcher = getMatcherById(adminId, matcherId);
+        modelMapper.map(matcherDTO, existingMatcher);
+        matcherDTO.getStudents().stream()
                 .filter(studentEmail -> !studentRepository.existsByMatcherIdAndEmail(matcherId, studentEmail))
                 .forEach(studentEmail -> {
                     Student newStudent = new Student();
                     newStudent.setEmail(studentEmail);
-                    newStudent.setMatcher(storedMatcher);
-                    storedMatcher.getStudents().add(newStudent);
+                    newStudent.setMatcher(existingMatcher);
+                    existingMatcher.getStudents().add(newStudent);
                 });
-        return notifyAndSave(storedMatcher, adminId, " added %s new students".formatted(studentEmails.size()));
-    }
-
-    public Matcher updateMatcher(Long adminId, Long matcherId, MatcherDTO matcherDTO) {
-        Matcher existingMatcher = getMatcherById(adminId, matcherId);
-        modelMapper.map(matcherDTO, existingMatcher);
+        addCollaborators(existingMatcher, matcherDTO.getCollaborators());
         return notifyAndSave(existingMatcher, adminId, " updated matcher settings");
     }
 

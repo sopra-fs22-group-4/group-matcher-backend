@@ -153,8 +153,10 @@ class AdminServiceTest {
     void addNewStudents_valid(){
         int numStudents = testMatcher.getStudents().size();
         List<String> newStudents = List.of("new-student-1@test.com", "new-student-2@test.com");
+        MatcherDTO testMatcherDTO = new MatcherDTO();
+        testMatcherDTO.setStudents(newStudents);
         given(studentRepository.existsByMatcherIdAndEmail(anyLong(), anyString())).willReturn(false);
-        Matcher storedMatcher = adminService.addNewStudents(testAdmin.getId(), testMatcher.getId(), newStudents);
+        Matcher storedMatcher = adminService.updateMatcher(testAdmin.getId(), testMatcher.getId(), testMatcherDTO);
         assertEquals(numStudents + newStudents.size(), storedMatcher.getStudents().size());
     }
 

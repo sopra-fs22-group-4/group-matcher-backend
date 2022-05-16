@@ -24,7 +24,8 @@ public class AppConfig {
                 .setPropertyCondition(context -> ObjectUtils.isNotEmpty(context.getSource()))
                 .setMatchingStrategy(MatchingStrategies.STRICT);
         modelMapper.typeMap(MatcherDTO.class, Matcher.class)
-                .addMappings(mapping -> mapping.skip(Matcher::setCollaborators));
+                .addMappings(mapping -> mapping.skip(Matcher::setCollaborators))
+                .addMappings(mapping -> mapping.skip(Matcher::setStudents));
         return modelMapper;
     }
 

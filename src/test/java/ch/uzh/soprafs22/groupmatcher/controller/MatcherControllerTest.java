@@ -58,7 +58,7 @@ class MatcherControllerTest {
     @SneakyThrows
     @Test
     void submitStudentAnswers(){
-        mockMvc.perform(put("/matchers/{matcherId}/students/{studentEmail}",
+        mockMvc.perform(post("/matchers/{matcherId}/students/{studentEmail}",
                         testMatcher.getId(), testStudent.getEmail())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new Gson().toJson(List.of(1L, 2L))))

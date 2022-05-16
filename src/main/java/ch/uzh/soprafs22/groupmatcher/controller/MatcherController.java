@@ -27,7 +27,7 @@ public class MatcherController {
         return matcherService.findMatcherStudent(matcherId, student);
     }
 
-    @PutMapping("/{matcherId}/students/{studentEmail}")
+    @PostMapping("/{matcherId}/students/{studentEmail}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void submitStudentAnswers(@PathVariable Long matcherId, @PathVariable String studentEmail, @RequestBody List<Long> answerIds) {
         matcherService.submitStudentAnswers(matcherId, studentEmail, answerIds);

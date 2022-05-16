@@ -18,5 +18,6 @@ public class MatcherDTO {
     private ZonedDateTime dueDate;
     private Integer groupSize;
     private MatchingStrategy matchingStrategy;
-    private List<UserDTO> collaborators= new ArrayList<>();
+    private List<UserDTO> collaborators = new ArrayList<>();
+    private List<String> students = new ArrayList<>();
 }

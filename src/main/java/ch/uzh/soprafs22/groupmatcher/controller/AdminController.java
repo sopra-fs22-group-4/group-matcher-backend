@@ -90,12 +90,7 @@ public class AdminController {
         return adminService.getLatestSubmissionsByMatcherId(adminId, matcherId);
     }
 
-    @PostMapping("/admins/{adminId}/matchers/{matcherId}/students")
-    public Matcher addStudents(@PathVariable Long adminId, @PathVariable Long matcherId, @RequestBody List<String> studentEmails){
-        return adminService.addNewStudents(adminId, matcherId, studentEmails);
-    }
-
-    @PostMapping("/admins/{adminId}/questions/{questionId}")
+    @PutMapping("/admins/{adminId}/questions/{questionId}")
     public Question updateQuestion(@PathVariable Long adminId, @PathVariable Long questionId, @RequestBody QuestionDTO updatedQuestion) {
         return adminService.updateQuestion(adminId, questionId, updatedQuestion);
     }
