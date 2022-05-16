@@ -76,7 +76,6 @@ public class EmailService {
     }
 
     public void sendCollaboratorInviteEmail(Admin admin) {
-        log.info("Inviting {}", admin.getEmail());
 //        Map<String, Object> variables = Map.of("name", admin.getName());
 //        mailSender.send(composeMessage("You are invited!", "collaborator_invite.html", variables, admin.getEmail()));
     }
