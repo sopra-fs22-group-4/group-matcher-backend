@@ -48,6 +48,9 @@ class AdminServiceTest {
     @MockBean
     SimpMessagingTemplate websocket;
 
+    @MockBean
+    EmailService emailService;
+
     @Autowired
     private AdminService adminService;
 

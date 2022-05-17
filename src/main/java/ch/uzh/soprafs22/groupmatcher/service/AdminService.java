@@ -39,6 +39,8 @@ public class AdminService {
 
     private SimpMessagingTemplate websocket;
 
+    private EmailService emailService;
+
     private Matcher notifyAndSave(Matcher matcher, Long adminId, String message) {
         Notification notification = new Notification();
         notification.setCreator(getAdminById(adminId));
@@ -49,11 +51,15 @@ public class AdminService {
         return matcherRepository.save(matcher);
     }
 
-    private Matcher addCollaborators(Matcher matcher, List<UserDTO> collaborators) {
-        collaborators.forEach(collaborator ->
-                matcher.getCollaborators().add(adminRepository.findByEmail(collaborator.getEmail())
-                        .orElse(modelMapper.map(collaborator, Admin.class))));
-        return matcher;
+    private Admin createCollaborator(UserDTO collaborator) {
+        Admin createdAdmin = adminRepository.save(modelMapper.map(collaborator, Admin.class));
+        emailService.sendCollaboratorInviteEmail(createdAdmin);
+        return createdAdmin;
+    }
+
+    private List<Admin> findOrCreateAccount(List<UserDTO> collaborators) {
+        return collaborators.stream().map(collaborator -> adminRepository.findByEmail(collaborator.getEmail())
+                .orElse(createCollaborator(collaborator))).toList();
     }
 
     private Admin getAdminById(Long adminId) {
@@ -77,14 +83,15 @@ public class AdminService {
         return storedQuestion;
     }
 
-    public Admin createAdmin(UserDTO userDTO){
+    public Admin createAdmin(UserDTO userDTO) {
         if (adminRepository.existsByEmail(userDTO.getEmail()))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with the given e-mail already exists");
-        Admin newAdmin = modelMapper.map(userDTO, Admin.class);
-        return adminRepository.save(newAdmin);
+        Admin createdAdmin = adminRepository.save(modelMapper.map(userDTO, Admin.class));
+        emailService.sendAccountVerificationEmail(createdAdmin);
+        return createdAdmin;
     }
 
-    public Admin validateLogin(UserDTO userDTO){
+    public Admin validateLogin(UserDTO userDTO) {
         Admin storedAdmin = adminRepository.findByEmailAndPassword(userDTO.getEmail(), userDTO.getPassword())
                 .orElseThrow(() -> adminRepository.findByEmail(userDTO.getEmail())
                         .map(foundEmail -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Incorrect password, please try again"))
@@ -105,7 +112,7 @@ public class AdminService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No account found for the given ID"));
         Matcher newMatcher = modelMapper.map(matcherDTO, Matcher.class);
         newMatcher.getCollaborators().add(storedAdmin);
-        addCollaborators(newMatcher, matcherDTO.getCollaborators());
+        newMatcher.getCollaborators().addAll(findOrCreateAccount(matcherDTO.getCollaborators()));
         return matcherRepository.save(newMatcher);
     }
 
@@ -140,7 +147,9 @@ public class AdminService {
                     newStudent.setMatcher(existingMatcher);
                     existingMatcher.getStudents().add(newStudent);
                 });
-        addCollaborators(existingMatcher, matcherDTO.getCollaborators());
+        List<UserDTO> newCollaborators = matcherDTO.getCollaborators().stream().filter(collaborator ->
+                !adminRepository.existsByMatchers_IdAndEmail(matcherId, collaborator.getEmail())).toList();
+        existingMatcher.getCollaborators().addAll(findOrCreateAccount(newCollaborators));
         return notifyAndSave(existingMatcher, adminId, " updated matcher settings");
     }
 

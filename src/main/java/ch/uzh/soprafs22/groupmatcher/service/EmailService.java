@@ -76,6 +76,7 @@ public class EmailService {
     }
 
     public void sendCollaboratorInviteEmail(Admin admin) {
+//        if (Strings.isNullOrEmpty(collaborator.getPassword())) then include password reset link
 //        Map<String, Object> variables = Map.of("name", admin.getName());
 //        mailSender.send(composeMessage("You are invited!", "collaborator_invite.html", variables, admin.getEmail()));
     }

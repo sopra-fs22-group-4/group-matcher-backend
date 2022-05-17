@@ -9,8 +9,6 @@ import ch.uzh.soprafs22.groupmatcher.model.Question;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherAdminOverview;
 import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import ch.uzh.soprafs22.groupmatcher.service.AdminService;
-import ch.uzh.soprafs22.groupmatcher.service.EmailService;
-import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -23,14 +21,10 @@ public class AdminController {
 
     private AdminService adminService;
 
-    private EmailService emailService;
-
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public Long createAdmin(@RequestBody UserDTO newAdmin) {
-        Admin createdAdmin = adminService.createAdmin(newAdmin);
-        emailService.sendAccountVerificationEmail(createdAdmin);
-        return createdAdmin.getId();
+    public Admin createAdmin(@RequestBody UserDTO newAdmin) {
+        return adminService.createAdmin(newAdmin);
     }
 
     @PostMapping("/login")
@@ -46,12 +40,7 @@ public class AdminController {
     @PostMapping("/admins/{adminId}/matchers")
     @ResponseStatus(HttpStatus.CREATED)
     public Matcher createMatcher(@PathVariable Long adminId, @RequestBody MatcherDTO newMatcher) {
-        Matcher createdMatcher = adminService.createMatcher(adminId, newMatcher);
-        createdMatcher.getCollaborators().forEach(collaborator -> {
-            if (Strings.isNullOrEmpty(collaborator.getPassword()))
-                emailService.sendCollaboratorInviteEmail(collaborator);
-        });
-        return createdMatcher;
+        return adminService.createMatcher(adminId, newMatcher);
     }
 
     @GetMapping("/admins/{adminId}/matchers")

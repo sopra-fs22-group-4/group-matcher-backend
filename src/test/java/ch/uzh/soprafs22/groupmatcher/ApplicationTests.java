@@ -44,9 +44,9 @@ class ApplicationTests {
         testUserDTO.setPassword("test");
         JavaMailSenderImpl mailSenderImpl = new JavaMailSenderImpl();
         given(mailSender.createMimeMessage()).willReturn(mailSenderImpl.createMimeMessage());
-        Long createdAdminId = adminController.createAdmin(testUserDTO);
-        Admin storedAdmin = adminController.verifyAccount(createdAdminId);
-        assertEquals(createdAdminId, storedAdmin.getId());
+        Admin createdAdmin = adminController.createAdmin(testUserDTO);
+        Admin storedAdmin = adminController.verifyAccount(createdAdmin.getId());
+        assertEquals(createdAdmin.getId(), storedAdmin.getId());
         assertEquals(testUserDTO.getName(), storedAdmin.getName());
         assertEquals(testUserDTO.getEmail(), storedAdmin.getEmail());
         assertEquals(testUserDTO.getPassword(), storedAdmin.getPassword());
