@@ -17,7 +17,7 @@ their answers or the deadline has been met - of course all participants will be 
 The goal of this application is to support both teachers and students in group related work and provide everyone with a quick, easy
 and fair way of finding group members and organizing the surrounding structure.
 
-##Technologies
+## Technologies
 - Java
 - SpringBoot
 - PostgreSQL
