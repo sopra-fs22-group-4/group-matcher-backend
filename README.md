@@ -1,6 +1,6 @@
 # SOPRA FS22 - Group 04 Backend
 
-##Introduction
+## Introduction
 
 Group matching in university courses can be very tedious. Whether it is finding great group members, having similar group sizes
 or simply having balanced skills across all groups.
@@ -27,8 +27,8 @@ and fair way of finding group members and organizing the surrounding structure.
 - Heroku
 - REST API
 
-##High-level components
-###Development components
+## High-level components
+### Development components
 
 - [Controller](src/main/java/ch/uzh/soprafs22/groupmatcher/controller)
 - [DTO](src/main/java/ch/uzh/soprafs22/groupmatcher/dto)
@@ -37,25 +37,25 @@ and fair way of finding group members and organizing the surrounding structure.
 - [Service](src/main/java/ch/uzh/soprafs22/groupmatcher/service)
 - [Application](src/main/java/ch/uzh/soprafs22/groupmatcher/Application.java)
 
-###Controller
+### Controller
 The controller is mainly responsible for handling requests made a specific endpoints. It processes the incoming REST API requests, preparing a model, and returning the view to be rendered as a response.
 
-###DTO
+### DTO
 DTO is responsible for passing data with multiple attributes in one shot from client to server to avoid multiple calls while they also serve in hiding implementation details of domain objects.
 
-###Model
+### Model
 The model defines a holder for model attributes and is primarily designed for adding attributes. It is responsible for holding application data which is displayed in the view.
 
-###Repository
+### Repository
 Repository is a mechanism for encapsulating storage, retrieval, and search behaviour which emulates a collection of objects 
 
-###Service
+### Service
 The Service component contains the business logic that needs to be implemented in the application. It is used to provide functionalities to the Controller class to serve the requests that are made at the API endpoints.
 
-###Application
+### Application
 The entry point for the entire application. One must run this class to start the backend server of the web application.
 
-###Testing components
+### Testing components
 - [Controller Tests](src/test/java/ch/uzh/soprafs22/groupmatcher/controller)
 Tests for controller components.
 
@@ -65,21 +65,21 @@ Tests for repository components.
 - [Service Tests](src/test/java/ch/uzh/soprafs22/groupmatcher/service)
 Tests for service components.
 
-##Launch and Development
+## Launch and Development
 
-##Illustrations
+## Illustrations
 
-##Roadmap
+## Roadmap
 
-##Learn more
+## Learn more
 - Java Documentation [Java Documentation](https://docs.oracle.com/en/java/)
 - Getting started with Spring [Spring Documentation](https://spring.io/guides/gs/spring-boot/)
 - Introduction to Thymeleaf [Thymeleaf Documentation](https://www.baeldung.com/thymeleaf-in-spring-mvc)
 - Learn PostgreSQL [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 
-##Authors & Acknowledgement
+## Authors & Acknowledgement
 >M. Guido, V. Herzl, H. Kim, A. A. Sirsikar, J. Meier
 
-##License
+## License
 Licensed under GNU General Public License v3.0
 - See [License](LICENSE)
