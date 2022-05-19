@@ -1,6 +1,6 @@
 # SOPRA FS22 - Group 04 Backend
 
-##Introduction
+## Introduction
 
 Group matching in university courses can be very tedious. Whether it is finding great group members, having similar group sizes
 or simply having balanced skills across all groups.
