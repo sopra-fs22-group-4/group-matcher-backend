@@ -1,7 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
@@ -32,9 +31,16 @@ public class Notification {
     @JoinColumn(name = "matcher_id")
     private Matcher matcher;
 
-    @JsonProperty("creatorName")
     public String getCreatorName() {
         return creator.getName();
+    }
+
+    public String getCourseName() {
+        return matcher.getCourseName();
+    }
+
+    public Long getMatcherId() {
+        return matcher.getId();
     }
 
 }

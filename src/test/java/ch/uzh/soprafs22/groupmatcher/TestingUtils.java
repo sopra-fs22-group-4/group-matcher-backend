@@ -42,7 +42,6 @@ public class TestingUtils {
     public static Answer createAnswer(Long answerId, Question question) {
         Answer answer = new Answer();
         answer.setId(answerId);
-        answer.setOrdinalNum(question.getAnswers().size()+1);
         answer.setQuestion(question);
         return answer;
     }
@@ -50,7 +49,6 @@ public class TestingUtils {
     public static Question createQuestion(Long questionId, Matcher matcher) {
         Question question = new Question();
         question.setId(questionId);
-        question.setOrdinalNum(matcher.getQuestions().size()+1);
         question.setQuestionCategory(QuestionCategory.PREFERENCES);
         question.setQuestionType(QuestionType.SINGLE_CHOICE);
         question.setContent("Test Question");
@@ -117,7 +115,6 @@ public class TestingUtils {
 
     public static QuestionDTO convertToDTO(Question question) {
         QuestionDTO questionDTO = new QuestionDTO();
-        questionDTO.setOrdinalNum(question.getOrdinalNum());
         questionDTO.setContent(question.getContent());
         questionDTO.setQuestionType(question.getQuestionType());
         return questionDTO;

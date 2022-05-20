@@ -18,8 +18,6 @@ public class Answer {
 
     private String content;
 
-    private Integer ordinalNum;
-
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "question_id")

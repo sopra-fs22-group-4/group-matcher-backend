@@ -18,8 +18,6 @@ public class Question {
     @GeneratedValue
     private Long id;
 
-    private Integer ordinalNum;
-
     private String content;
 
     @Column(nullable = false)

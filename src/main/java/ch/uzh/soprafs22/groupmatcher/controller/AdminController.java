@@ -5,6 +5,7 @@ import ch.uzh.soprafs22.groupmatcher.dto.QuestionDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
+import ch.uzh.soprafs22.groupmatcher.model.Notification;
 import ch.uzh.soprafs22.groupmatcher.model.Question;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherAdminOverview;
 import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
@@ -46,6 +47,11 @@ public class AdminController {
     @GetMapping("/admins/{adminId}/matchers")
     public List<MatcherAdminOverview> getMatchers(@PathVariable Long adminId) {
         return adminService.getMatchersByAdminId(adminId);
+    }
+
+    @GetMapping("/admins/{adminId}/notifications/latest")
+    public List<Notification> getLatestNotifications(@PathVariable Long adminId) {
+        return adminService.getLatestNotificationsByAdminId(adminId);
     }
 
     @GetMapping("/admins/{adminId}/submissions/latest")

@@ -6,10 +6,7 @@ import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.*;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherAdminOverview;
 import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
-import ch.uzh.soprafs22.groupmatcher.repository.AdminRepository;
-import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
-import ch.uzh.soprafs22.groupmatcher.repository.QuestionRepository;
-import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
+import ch.uzh.soprafs22.groupmatcher.repository.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -20,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.stream.IntStream;
 
 @Slf4j
 @AllArgsConstructor
@@ -34,6 +30,8 @@ public class AdminService {
     private QuestionRepository questionRepository;
 
     private StudentRepository studentRepository;
+
+    private NotificationRepository notificationRepository;
 
     private ModelMapper modelMapper;
 
@@ -124,14 +122,7 @@ public class AdminService {
         if (!newQuestion.getContent().endsWith("?"))
             newQuestion.setContent(newQuestion.getContent() + "?");
         newQuestion.setMatcher(storedMatcher);
-        newQuestion.setOrdinalNum(storedMatcher.getQuestions().size()+1);
-        newQuestion.setAnswers(IntStream.range(0, questionDTO.getAnswers().size()).mapToObj(index -> {
-            Answer newAnswer = new Answer();
-            newAnswer.setContent(questionDTO.getAnswers().get(index));
-            newAnswer.setOrdinalNum(index+1);
-            newAnswer.setQuestion(newQuestion);
-            return newAnswer;
-        }).toList());
+        newQuestion.getAnswers().forEach(answer -> answer.setQuestion(newQuestion));
         storedMatcher.getQuestions().add(newQuestion);
         return notifyAndSave(storedMatcher, adminId, " created a new question");
     }
@@ -161,6 +152,10 @@ public class AdminService {
     public Question updateQuestion(Long adminId, Long questionId, QuestionDTO questionDTO) {
         Question existingQuestion = getQuestionById(adminId, questionId);
         modelMapper.map(questionDTO, existingQuestion);
+        existingQuestion.getAnswers().forEach(answer -> {
+            if (answer.getQuestion() == null)
+                answer.setQuestion(existingQuestion);
+        });
         return questionRepository.save(existingQuestion);
     }
 
@@ -171,6 +166,10 @@ public class AdminService {
 
     public List<MatcherAdminOverview> getMatchersByAdminId(Long adminId) {
         return matcherRepository.findByCollaborators_IdOrderByDueDateDesc(adminId);
+    }
+
+    public List<Notification> getLatestNotificationsByAdminId(Long adminId) {
+        return notificationRepository.findByMatcher_Collaborators_IdOrderByCreatedAtDesc(adminId, Pageable.ofSize(25));
     }
 
     public List<Submission> getLatestSubmissionsByAdminId(Long adminId) {
