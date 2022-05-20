@@ -1,7 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.Setter;
