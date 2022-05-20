@@ -32,7 +32,7 @@ public class Admin {
     @ManyToMany(mappedBy = "collaborators",cascade = CascadeType.ALL)
     private Set<Matcher> matchers  = new LinkedHashSet<>();
 
-    public boolean isFullyRegistered() {
+    public boolean getHasPassword() {
         return !Strings.isNullOrEmpty(password);
     }
 }

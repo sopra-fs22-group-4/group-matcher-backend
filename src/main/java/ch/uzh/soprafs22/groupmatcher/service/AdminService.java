@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @AllArgsConstructor
@@ -55,9 +57,9 @@ public class AdminService {
         return createdAdmin;
     }
 
-    private List<Admin> findOrCreateAccount(List<UserDTO> collaborators) {
-        return collaborators.stream().map(collaborator -> adminRepository.findByEmail(collaborator.getEmail())
-                .orElse(createCollaborator(collaborator))).toList();
+    private Admin findOrCreateAccount(UserDTO collaborator) {
+        return Optional.of(collaborator.getId()).map(this::getAdminById).or(() ->
+                adminRepository.findByEmail(collaborator.getEmail())).orElse(createCollaborator(collaborator));
     }
 
     private Admin getAdminById(Long adminId) {
@@ -110,7 +112,8 @@ public class AdminService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No account found for the given ID"));
         Matcher newMatcher = modelMapper.map(matcherDTO, Matcher.class);
         newMatcher.getCollaborators().add(storedAdmin);
-        newMatcher.getCollaborators().addAll(findOrCreateAccount(matcherDTO.getCollaborators()));
+        matcherDTO.getCollaborators().forEach(collaboratorDTO ->
+                newMatcher.getCollaborators().add(findOrCreateAccount(collaboratorDTO)));
         return matcherRepository.save(newMatcher);
     }
 
@@ -130,7 +133,7 @@ public class AdminService {
     public Matcher updateMatcher(Long adminId, Long matcherId, MatcherDTO matcherDTO) {
         Matcher existingMatcher = getMatcherById(adminId, matcherId);
         modelMapper.map(matcherDTO, existingMatcher);
-        matcherDTO.getStudents().stream()
+        Set.copyOf(matcherDTO.getStudents()).stream()
                 .filter(studentEmail -> !studentRepository.existsByMatcherIdAndEmail(matcherId, studentEmail))
                 .forEach(studentEmail -> {
                     Student newStudent = new Student();
@@ -138,9 +141,11 @@ public class AdminService {
                     newStudent.setMatcher(existingMatcher);
                     existingMatcher.getStudents().add(newStudent);
                 });
-        List<UserDTO> newCollaborators = matcherDTO.getCollaborators().stream().filter(collaborator ->
-                !adminRepository.existsByMatchers_IdAndEmail(matcherId, collaborator.getEmail())).toList();
-        existingMatcher.getCollaborators().addAll(findOrCreateAccount(newCollaborators));
+        matcherDTO.getCollaborators().forEach(collaboratorDTO -> {
+            Admin collaborator = findOrCreateAccount(collaboratorDTO);
+            if (!adminRepository.existsByMatchers_IdAndId(matcherId, collaborator.getId()))
+                existingMatcher.getCollaborators().add(collaborator);
+        });
         return notifyAndSave(existingMatcher, adminId, " updated matcher settings");
     }
 
@@ -156,6 +161,7 @@ public class AdminService {
             if (answer.getQuestion() == null)
                 answer.setQuestion(existingQuestion);
         });
+        notifyAndSave(existingQuestion.getMatcher(), adminId, " updated question");
         return questionRepository.save(existingQuestion);
     }
 
@@ -169,7 +175,7 @@ public class AdminService {
     }
 
     public List<Notification> getLatestNotificationsByAdminId(Long adminId) {
-        return notificationRepository.findByMatcher_Collaborators_IdOrderByCreatedAtDesc(adminId, Pageable.ofSize(25));
+        return notificationRepository.findByMatcher_Collaborators_IdOrderByCreatedAtDesc(adminId, Pageable.ofSize(30));
     }
 
     public List<Submission> getLatestSubmissionsByAdminId(Long adminId) {
