@@ -10,10 +10,8 @@ import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherOverview;
 import ch.uzh.soprafs22.groupmatcher.repository.AnswerRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
-import ch.uzh.soprafs22.groupmatcher.service.matching.DataProcessing;
-import ch.uzh.soprafs22.groupmatcher.service.matching.Prim;
-import ch.uzh.soprafs22.groupmatcher.service.matching.Vertex;
 import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
 import de.lmu.ifi.dbs.elki.algorithm.clustering.kmeans.initialization.KMeansInitialization;
 import de.lmu.ifi.dbs.elki.algorithm.clustering.kmeans.initialization.RandomUniformGeneratedInitialMeans;
 import de.lmu.ifi.dbs.elki.data.Clustering;
@@ -30,15 +28,20 @@ import de.lmu.ifi.dbs.elki.distance.distancefunction.minkowski.EuclideanDistance
 import de.lmu.ifi.dbs.elki.utilities.random.RandomFactory;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
+import org.jgrapht.Graph;
+import org.jgrapht.Graphs;
+import org.jgrapht.graph.DefaultUndirectedWeightedGraph;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import tutorial.clustering.SameSizeKMeansAlgorithm;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 
 import static java.time.ZonedDateTime.now;
 
@@ -71,8 +74,6 @@ public class MatcherService {
     public Student submitStudentAnswers(Long matcherId, String studentEmail, List<Long> answerIds) {
         Student student = getStudent(matcherId, studentEmail);
         List<Answer> quizAnswers = answerRepository.findByIdInAndQuestion_Matcher_Id(answerIds, matcherId);
-        if (quizAnswers.size() < student.getMatcher().getQuestions().size())
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Please provide valid answers to all quiz questions");
         student.setSelectedAnswers(quizAnswers);
         student.setSubmissionTimestamp(now());
         return studentRepository.save(student);
@@ -85,7 +86,7 @@ public class MatcherService {
                     Matcher updatedMatcher = matcherRepository.save(matcher);
                     return switch (updatedMatcher.getMatchingStrategy()) {
                         case MOST_SIMILAR -> runMostSimilarModel(updatedMatcher);
-                        case BALANCED_SKILLS -> runBalancedSkillsModelTemp(updatedMatcher);
+                        case BALANCED_SKILLS -> runBalancedSkillsModel(updatedMatcher);
                     };
                 }).toList();
     }
@@ -129,39 +130,40 @@ public class MatcherService {
                     .mapToDouble(Integer::doubleValue).toArray()).toArray(double[][]::new);
     }
 
-    public Matcher runBalancedSkillsModelTemp(Matcher matcher){
-
-        DataProcessing dataProcessing = new DataProcessing();
-
-        String[] studentEmails = matcher.getStudents().stream().map(Student::getEmail).toArray(String[]::new);
-        double[][] totalScoreMatrix = dataProcessing.calMatchingScoreTemp(matcher.getStudents());
-
-        List<Vertex> initGraph = dataProcessing.adjMatrixToVertexList(totalScoreMatrix,studentEmails);
-
-        int groupSize = matcher.getGroupSize();
-        Prim prim = new Prim(initGraph);
-
-        while(!prim.getGraph().isEmpty()){
-            Team newTeam = new Team();
-            newTeam.setMatcher(matcher);
-
-            prim.run(groupSize,false);
-
-            List<Vertex> newTeamMembers = prim.getVisitedVertex();
-
-            for (Vertex student: newTeamMembers) {
-                Student storedStudent = matcher.getStudents().stream()
-                        .filter(std -> Objects.equals(std.getEmail(), student.getEmail())).findFirst().orElse(null);
-                newTeam.getStudents().add(storedStudent);
-                if(null != storedStudent){
-                    storedStudent.setTeam(newTeam);
+    public Matcher runBalancedSkillsModel(Matcher matcher) {
+        Graph<Team, DefaultWeightedEdge> studentsGraph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
+        Graphs.addAllVertices(studentsGraph, matcher.getStudents().stream().map(Team::new).toList());
+        Sets.combinations(studentsGraph.vertexSet(), 2).forEach(studentsPairSet -> {
+            Iterator<Team> studentsPair = studentsPairSet.iterator();
+            Team student1 = studentsPair.next();
+            Team student2 = studentsPair.next();
+            Long student2Id = student2.getStudents().get(0).getId();
+            double matchingScore = student1.getStudents().get(0).getSelectedAnswers().stream().mapToDouble(selectedAnswer ->
+                    selectedAnswer.calculateBalancedMatchingScore(student2Id)).sum();
+            studentsGraph.setEdgeWeight(studentsGraph.addEdge(student1, student2), matchingScore);
+        });
+        while (!studentsGraph.edgeSet().isEmpty())
+            studentsGraph.edgeSet().stream().max(Comparator.comparingDouble(studentsGraph::getEdgeWeight)).ifPresent(edge -> {
+                Team newMembers = studentsGraph.getEdgeSource(edge);
+                Team team = studentsGraph.getEdgeTarget(edge);
+                if ((team.getStudents().size() + newMembers.getStudents().size()) > matcher.getGroupSize())
+                    studentsGraph.removeEdge(edge);
+                else {
+                    Graphs.neighborListOf(studentsGraph, newMembers).forEach(newMembersNeighbor ->
+                            Optional.ofNullable(studentsGraph.getEdge(team, newMembersNeighbor)).ifPresent(teamToNeighborEdge -> {
+                                DefaultWeightedEdge newMembersNeighborEdge = studentsGraph.getEdge(newMembers, newMembersNeighbor);
+                                double newMembersToNeighborWeight = studentsGraph.getEdgeWeight(newMembersNeighborEdge);
+                                double teamToNeighborWeight = studentsGraph.getEdgeWeight(teamToNeighborEdge);
+                                if (newMembersToNeighborWeight < teamToNeighborWeight)
+                                    studentsGraph.setEdgeWeight(teamToNeighborEdge, newMembersToNeighborWeight);
+                                studentsGraph.removeEdge(newMembersNeighborEdge);
+                            }));
+                    studentsGraph.removeVertex(newMembers);
+                    team.getStudents().addAll(newMembers.getStudents());
                 }
-            }
-            matcher.getTeams().add(newTeam);
-
-            prim.deleteVisitedVertex();
-        }
-
+            });
+        matcher.getTeams().addAll(studentsGraph.vertexSet());
+        matcher.setStatus(Status.MATCHED);
         return matcherRepository.save(matcher);
     }
 }

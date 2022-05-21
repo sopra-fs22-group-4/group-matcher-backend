@@ -3,6 +3,7 @@ package ch.uzh.soprafs22.groupmatcher.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -48,4 +49,20 @@ public class Student {
         return matcher.getQuestions();
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        return Objects.equal(id, ((Student) other).id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
+
+    @Override
+    public String toString() {
+        return id.toString();
+    }
 }
