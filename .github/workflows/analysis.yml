@@ -1,9 +1,6 @@
 name: Backend Quality Analysis
 
-on:
-  push:
-    branches:
-      - main
+on: [push]
 
 jobs:
   analysis:
@@ -22,7 +19,7 @@ jobs:
         distribution: zulu
         java-version: 17
 
-    - name: Generate Report
+    - name: Generate Test Report
       uses: gradle/gradle-build-action@v2.1.4
       with:
         arguments: jacocoTestReport sonarqube --info
@@ -33,7 +30,10 @@ jobs:
         MAIL_HOST: ${{ secrets.MAIL_HOST }}
         MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
         MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
-    - uses: akhileshns/heroku-deploy@v3.12.12
+
+    - name: Deploy to Heroku
+      uses: akhileshns/heroku-deploy@v3.12.12
+      if: github.ref_name == 'main'
       with:
         heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
         heroku_email: ${{ secrets.HEROKU_EMAIL }}
