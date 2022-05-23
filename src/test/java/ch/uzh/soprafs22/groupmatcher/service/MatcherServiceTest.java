@@ -18,9 +18,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.IntStream;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.*;
@@ -121,8 +125,12 @@ class MatcherServiceTest {
 
     @Test
     void initMatchingTest() {
+        testMatcher.setGroupSize(3);
+        testMatcher.setMatchingStrategy(MatchingStrategy.MOST_SIMILAR);
         Question question1 = testMatcher.getQuestions().get(0);
         Question question2 = testMatcher.getQuestions().get(1);
+        assertEquals(2, question1.getAnswers().size());
+        assertEquals(4, question2.getAnswers().size());
         List<Answer> selectedAnswers1 = List.of(question1.getAnswers().get(0), question2.getAnswers().get(2), question2.getAnswers().get(3));
         List<Answer> selectedAnswers2 = List.of(question1.getAnswers().get(1), question2.getAnswers().get(0), question2.getAnswers().get(3));
         List<Answer> selectedAnswers3 = List.of(question1.getAnswers().get(1), question2.getAnswers().get(2));
@@ -156,101 +164,66 @@ class MatcherServiceTest {
         assertEquals(2, returnedMatcher.getTeams().get(0).getStudents().size());
         assertEquals(3, returnedMatcher.getTeams().get(1).getStudents().size());
         assertEquals(2, returnedMatcher.getTeams().get(2).getStudents().size());
-        Set<Long> expectedTeamStudents1_3 = Set.of(testMatcher.getStudents().get(0).getId(), testMatcher.getStudents().get(2).getId());
-        Set<Long> expectedTeamStudents2_7 = Set.of(testMatcher.getStudents().get(1).getId(), testMatcher.getStudents().get(6).getId());
-        Set<Long> expectedTeamStudents4_5_6 = Set.of(testMatcher.getStudents().get(3).getId(),
-                testMatcher.getStudents().get(4).getId(), testMatcher.getStudents().get(5).getId());
-        assertEquals(expectedTeamStudents1_3, returnedMatcher.getStudents().get(0).getTeam().getStudents()
-                .stream().map(Student::getId).collect(Collectors.toSet()));
-        assertEquals(expectedTeamStudents2_7, returnedMatcher.getStudents().get(1).getTeam().getStudents()
-                .stream().map(Student::getId).collect(Collectors.toSet()));
-        assertEquals(expectedTeamStudents4_5_6, returnedMatcher.getStudents().get(3).getTeam().getStudents()
-                .stream().map(Student::getId).collect(Collectors.toSet()));
+        List<Student> expectedTeamStudents1_3 = List.of(testMatcher.getStudents().get(0), testMatcher.getStudents().get(2));
+        List<Student> expectedTeamStudents2_7 = List.of(testMatcher.getStudents().get(1), testMatcher.getStudents().get(6));
+        List<Student> expectedTeamStudents4_5_6 = List.of(testMatcher.getStudents().get(3),
+                testMatcher.getStudents().get(4), testMatcher.getStudents().get(5));
+        assertThat(expectedTeamStudents1_3, containsInAnyOrder(returnedMatcher.getTeams().get(0).getStudents().toArray()));
+        assertThat(expectedTeamStudents4_5_6, containsInAnyOrder(returnedMatcher.getTeams().get(1).getStudents().toArray()));
+        assertThat(expectedTeamStudents2_7, containsInAnyOrder(returnedMatcher.getTeams().get(2).getStudents().toArray()));
     }
 
     @Test
     void initMatchingTest_BalancedSkill() {
-        /*
-        * SETUP
-        * */
+        testMatcher.setGroupSize(3);
         testMatcher.setMatchingStrategy(MatchingStrategy.BALANCED_SKILLS);
-        testMatcher.getQuestions().get(1).setQuestionCategory(QuestionCategory.SKILLS);
-        // Add more test students (Total : 7)
+        Question question1 = testMatcher.getQuestions().get(0);
+        Question question2 = testMatcher.getQuestions().get(1);
+        question1.setQuestionCategory(QuestionCategory.PREFERENCES);
+        question2.setQuestionCategory(QuestionCategory.SKILLS);
+        assertEquals(2, question1.getAnswers().size());
+        assertEquals(4, question2.getAnswers().size());
         Student student4 = TestingUtils.createStudent(104L, testMatcher);
         Student student5 = TestingUtils.createStudent(105L, testMatcher);
         Student student6 = TestingUtils.createStudent(106L, testMatcher);
         Student student7 = TestingUtils.createStudent(107L, testMatcher);
-        testMatcher.getStudents().addAll(List.of(student4,student5,student6,student7));
-        assertEquals(3,testMatcher.getGroupSize());
-        // Team 1: {student1,student3,student5}
-        Set<Long> expectedTeamStudents135 = Set.of(
-                testMatcher.getStudents().get(0).getId(),
-                testMatcher.getStudents().get(2).getId(),
-                testMatcher.getStudents().get(4).getId());
-        // Team 2: {student2,student4,student7}
-        Set<Long> expectedTeamStudents247 = Set.of(
-                testMatcher.getStudents().get(1).getId(),
-                testMatcher.getStudents().get(3).getId(),
-                testMatcher.getStudents().get(6).getId());
-        // Team 3: {student6}
-        Set<Long> expectedTeamStudents6 = Set.of(
-                testMatcher.getStudents().get(5).getId()
+        testMatcher.getStudents().addAll(List.of(student4, student5, student6, student7));
+        List<Answer> possibleAnswers = testMatcher.getQuestions().stream().flatMap(question -> question.getAnswers().stream()).toList();
+        List<List<Integer>> studentAnswersMatrix = List.of(
+                List.of(1, 0, 1, 1, 1, 1),
+                List.of(0, 0, 1, 1, 0, 0),
+                List.of(1, 1, 0, 0, 1, 1),
+                List.of(0, 1, 0, 1, 0, 1),
+                List.of(1, 1, 0, 0, 0, 0),
+                List.of(0, 0, 1, 1, 1, 0),
+                List.of(1, 0, 0, 0, 1, 0)
         );
-
-        // Intended Student Answer Matrix (1 : Selected, 0 : Not Selected)
-        double[][] simAnswersMatrix = new double[][]{
-                {1, 0, 1, 1, 1, 1},
-                {0, 0, 1, 1, 0, 0},
-                {1, 1, 0, 0, 1, 1},
-                {0, 1, 0, 1, 0, 1},
-                {1, 1, 0, 0, 0, 0},
-                {0, 0, 1, 1, 1, 0},
-                {1, 0, 0, 0, 1, 0}
-        };
-        List<Answer> candidateAnswers = testMatcher.getQuestions().stream().map(Question::getAnswers)
-                .toList().stream().flatMap(Collection::stream).collect(Collectors.toList());
-        assertEquals(6, candidateAnswers.size());
-        for (int i = 0; i<testMatcher.getStudents().size(); i++){
-            List<Answer> studentAnswers = new ArrayList<>();
-            for (int j = 0; j<candidateAnswers.size(); j++){
-                if (simAnswersMatrix[i][j] == 1){
-                    studentAnswers.add(candidateAnswers.get(j));
-                    List<Student> studentsInAnswer = candidateAnswers.get(j).getStudents();
-                    studentsInAnswer.add(testMatcher.getStudents().get(i));
-                    candidateAnswers.get(j).setStudents(studentsInAnswer);
+        IntStream.range(0, testMatcher.getStudents().size()).forEach(row -> {
+            List<Answer> selectedAnswers = new ArrayList<>();
+            IntStream.range(0, possibleAnswers.size()).forEach(col -> {
+                Integer cell = studentAnswersMatrix.get(row).get(col);
+                if (cell == 1) {
+                    selectedAnswers.add(possibleAnswers.get(col));
+                    possibleAnswers.get(col).getStudents().add(testMatcher.getStudents().get(row));
                 }
-            }
-            testMatcher.getStudents().get(i).setSelectedAnswers(studentAnswers);
-            assertEquals(Arrays.stream(simAnswersMatrix[i]).sum(),
-                    testMatcher.getStudents().get(i).getSelectedAnswers().size());
-        }
-
-        /*
-         * GIVEN
-         * */
+            });
+            testMatcher.getStudents().get(row).setSelectedAnswers(selectedAnswers);
+        });
+        List<Student> expectedTeamStudents2_7 = List.of(testMatcher.getStudents().get(1), testMatcher.getStudents().get(6));
+        List<Student> expectedTeamStudents4_6 = List.of(testMatcher.getStudents().get(3), testMatcher.getStudents().get(5));
+        List<Student> expectedTeamStudents1_3_5 = List.of(testMatcher.getStudents().get(0),
+                testMatcher.getStudents().get(2), testMatcher.getStudents().get(4));
         given(matcherRepository.findByDueDateIsAfterAndStatus(any(), any())).willReturn(List.of(testMatcher));
-
-        /*
-         * RUN
-         * */
         List<Matcher> returnedMatchers = matcherService.initMatching();
-        Matcher returnedMatcher = returnedMatchers.get(0);
         assertEquals(1, returnedMatchers.size());
+        Matcher returnedMatcher = returnedMatchers.get(0);
         assertEquals(testMatcher.getId(), returnedMatcher.getId());
-
-        // CHECK MAIN
         assertEquals(3, returnedMatcher.getTeams().size());
         assertEquals(3, returnedMatcher.getTeams().get(0).getStudents().size());
-        assertEquals(3, returnedMatcher.getTeams().get(1).getStudents().size());
-        assertEquals(1, returnedMatcher.getTeams().get(2).getStudents().size());
-        assertEquals(expectedTeamStudents135,
-                returnedMatcher.getTeams().get(0)
-                        .getStudents().stream().map(Student::getId).collect(Collectors.toSet()));
-        assertEquals(expectedTeamStudents247,
-                returnedMatcher.getTeams().get(1)
-                        .getStudents().stream().map(Student::getId).collect(Collectors.toSet()));
-        assertEquals(expectedTeamStudents6,
-                returnedMatcher.getTeams().get(2)
-                        .getStudents().stream().map(Student::getId).collect(Collectors.toSet()));
+        assertEquals(2, returnedMatcher.getTeams().get(1).getStudents().size());
+        assertEquals(2, returnedMatcher.getTeams().get(2).getStudents().size());
+        assertThat(expectedTeamStudents1_3_5, containsInAnyOrder(returnedMatcher.getTeams().get(0).getStudents().toArray()));
+        assertThat(expectedTeamStudents4_6, containsInAnyOrder(returnedMatcher.getTeams().get(1).getStudents().toArray()));
+        assertThat(expectedTeamStudents2_7, containsInAnyOrder(returnedMatcher.getTeams().get(2).getStudents().toArray()));
     }
 }

@@ -58,7 +58,7 @@ public class AdminService {
     }
 
     private Admin findOrCreateAccount(UserDTO collaborator) {
-        return Optional.of(collaborator.getId()).map(this::getAdminById).or(() ->
+        return Optional.ofNullable(collaborator.getId()).map(this::getAdminById).or(() ->
                 adminRepository.findByEmail(collaborator.getEmail())).orElse(createCollaborator(collaborator));
     }
 
