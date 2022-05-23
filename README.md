@@ -98,8 +98,6 @@ Set up the URL for the frontend of the application via the ENV variable in the [
 ### Running the application
 Once the configurations mentioned above you can run the [application.java](/src/main/java/ch/uzh/soprafs22/groupmatcher/Application.java) to start the backend of the web app.
 
-## Illustrations
-
 ## Roadmap
 Potential improvements or extensions may include:
 
