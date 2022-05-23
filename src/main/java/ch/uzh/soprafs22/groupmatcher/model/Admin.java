@@ -1,6 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -30,4 +31,8 @@ public class Admin {
     @JsonIgnore
     @ManyToMany(mappedBy = "collaborators",cascade = CascadeType.ALL)
     private Set<Matcher> matchers  = new LinkedHashSet<>();
+
+    public boolean getHasPassword() {
+        return !Strings.isNullOrEmpty(password);
+    }
 }

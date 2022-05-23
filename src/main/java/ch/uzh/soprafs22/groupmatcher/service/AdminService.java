@@ -6,10 +6,7 @@ import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.*;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherAdminOverview;
 import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
-import ch.uzh.soprafs22.groupmatcher.repository.AdminRepository;
-import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
-import ch.uzh.soprafs22.groupmatcher.repository.QuestionRepository;
-import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
+import ch.uzh.soprafs22.groupmatcher.repository.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -20,7 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.stream.IntStream;
+import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @AllArgsConstructor
@@ -34,6 +32,8 @@ public class AdminService {
     private QuestionRepository questionRepository;
 
     private StudentRepository studentRepository;
+
+    private NotificationRepository notificationRepository;
 
     private ModelMapper modelMapper;
 
@@ -57,9 +57,9 @@ public class AdminService {
         return createdAdmin;
     }
 
-    private List<Admin> findOrCreateAccount(List<UserDTO> collaborators) {
-        return collaborators.stream().map(collaborator -> adminRepository.findByEmail(collaborator.getEmail())
-                .orElse(createCollaborator(collaborator))).toList();
+    private Admin findOrCreateAccount(UserDTO collaborator) {
+        return Optional.of(collaborator.getId()).map(this::getAdminById).or(() ->
+                adminRepository.findByEmail(collaborator.getEmail())).orElse(createCollaborator(collaborator));
     }
 
     private Admin getAdminById(Long adminId) {
@@ -112,7 +112,8 @@ public class AdminService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No account found for the given ID"));
         Matcher newMatcher = modelMapper.map(matcherDTO, Matcher.class);
         newMatcher.getCollaborators().add(storedAdmin);
-        newMatcher.getCollaborators().addAll(findOrCreateAccount(matcherDTO.getCollaborators()));
+        matcherDTO.getCollaborators().forEach(collaboratorDTO ->
+                newMatcher.getCollaborators().add(findOrCreateAccount(collaboratorDTO)));
         return matcherRepository.save(newMatcher);
     }
 
@@ -124,14 +125,7 @@ public class AdminService {
         if (!newQuestion.getContent().endsWith("?"))
             newQuestion.setContent(newQuestion.getContent() + "?");
         newQuestion.setMatcher(storedMatcher);
-        newQuestion.setOrdinalNum(storedMatcher.getQuestions().size()+1);
-        newQuestion.setAnswers(IntStream.range(0, questionDTO.getAnswers().size()).mapToObj(index -> {
-            Answer newAnswer = new Answer();
-            newAnswer.setContent(questionDTO.getAnswers().get(index));
-            newAnswer.setOrdinalNum(index+1);
-            newAnswer.setQuestion(newQuestion);
-            return newAnswer;
-        }).toList());
+        newQuestion.getAnswers().forEach(answer -> answer.setQuestion(newQuestion));
         storedMatcher.getQuestions().add(newQuestion);
         return notifyAndSave(storedMatcher, adminId, " created a new question");
     }
@@ -139,7 +133,7 @@ public class AdminService {
     public Matcher updateMatcher(Long adminId, Long matcherId, MatcherDTO matcherDTO) {
         Matcher existingMatcher = getMatcherById(adminId, matcherId);
         modelMapper.map(matcherDTO, existingMatcher);
-        matcherDTO.getStudents().stream()
+        Set.copyOf(matcherDTO.getStudents()).stream()
                 .filter(studentEmail -> !studentRepository.existsByMatcherIdAndEmail(matcherId, studentEmail))
                 .forEach(studentEmail -> {
                     Student newStudent = new Student();
@@ -147,9 +141,11 @@ public class AdminService {
                     newStudent.setMatcher(existingMatcher);
                     existingMatcher.getStudents().add(newStudent);
                 });
-        List<UserDTO> newCollaborators = matcherDTO.getCollaborators().stream().filter(collaborator ->
-                !adminRepository.existsByMatchers_IdAndEmail(matcherId, collaborator.getEmail())).toList();
-        existingMatcher.getCollaborators().addAll(findOrCreateAccount(newCollaborators));
+        matcherDTO.getCollaborators().forEach(collaboratorDTO -> {
+            Admin collaborator = findOrCreateAccount(collaboratorDTO);
+            if (!adminRepository.existsByMatchers_IdAndId(matcherId, collaborator.getId()))
+                existingMatcher.getCollaborators().add(collaborator);
+        });
         return notifyAndSave(existingMatcher, adminId, " updated matcher settings");
     }
 
@@ -161,6 +157,11 @@ public class AdminService {
     public Question updateQuestion(Long adminId, Long questionId, QuestionDTO questionDTO) {
         Question existingQuestion = getQuestionById(adminId, questionId);
         modelMapper.map(questionDTO, existingQuestion);
+        existingQuestion.getAnswers().forEach(answer -> {
+            if (answer.getQuestion() == null)
+                answer.setQuestion(existingQuestion);
+        });
+        notifyAndSave(existingQuestion.getMatcher(), adminId, " updated question");
         return questionRepository.save(existingQuestion);
     }
 
@@ -171,6 +172,10 @@ public class AdminService {
 
     public List<MatcherAdminOverview> getMatchersByAdminId(Long adminId) {
         return matcherRepository.findByCollaborators_IdOrderByDueDateDesc(adminId);
+    }
+
+    public List<Notification> getLatestNotificationsByAdminId(Long adminId) {
+        return notificationRepository.findByMatcher_Collaborators_IdOrderByCreatedAtDesc(adminId, Pageable.ofSize(30));
     }
 
     public List<Submission> getLatestSubmissionsByAdminId(Long adminId) {

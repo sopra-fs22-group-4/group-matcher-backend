@@ -16,6 +16,7 @@ import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -41,7 +42,7 @@ public class EmailService {
                     MimeMessageHelper.MULTIPART_MODE_MIXED, StandardCharsets.UTF_8.name());
             Context context = new Context();
             context.setVariables(variables);
-            helper.setFrom("notify@groupmatcher.ch");
+            helper.setFrom("notify@groupmatcher.ch", "groupmatcher");
             helper.setTo(recipients);
             helper.setSubject(subject);
             String html = templateEngine.process(templateName, context);
@@ -49,7 +50,7 @@ public class EmailService {
             helper.addInline("bg.png", new ClassPathResource("bg.png"));
             helper.addInline("logo.png", new ClassPathResource("logo.png"));
             helper.addInline("tagline.png", new ClassPathResource("tagline.png"));
-        } catch (MessagingException exception) {
+        } catch (MessagingException | UnsupportedEncodingException exception) {
             log.info("Failed to create an email message");
         }
         return message;
@@ -65,7 +66,9 @@ public class EmailService {
     }
 
     public void sendAccountVerificationEmail(Admin admin) {
-        Map<String, Object> variables = Map.of("name", admin.getName());
+        Map<String, Object> variables = Map.of(
+                "name", admin.getName(),
+                "verifyURL", "https://group-matcher.herokuapp.com/verify/"+admin.getId());
         mailSender.send(composeMessage("Verify Account", "email_verification.html", variables, admin.getEmail()));
     }
 

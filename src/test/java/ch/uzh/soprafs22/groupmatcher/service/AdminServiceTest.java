@@ -4,14 +4,12 @@ import ch.uzh.soprafs22.groupmatcher.TestingUtils;
 import ch.uzh.soprafs22.groupmatcher.config.AppConfig;
 import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
+import ch.uzh.soprafs22.groupmatcher.dto.AnswerDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.QuestionDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.*;
-import ch.uzh.soprafs22.groupmatcher.repository.AdminRepository;
-import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
-import ch.uzh.soprafs22.groupmatcher.repository.QuestionRepository;
-import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
+import ch.uzh.soprafs22.groupmatcher.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +42,9 @@ class AdminServiceTest {
 
     @MockBean
     private StudentRepository studentRepository;
+
+    @MockBean
+    private NotificationRepository notificationRepository;
 
     @MockBean
     SimpMessagingTemplate websocket;
@@ -169,7 +170,9 @@ class AdminServiceTest {
         QuestionDTO testQuestionDTO = new QuestionDTO();
         testQuestionDTO.setContent("Test Question");
         testQuestionDTO.setQuestionType(QuestionType.SINGLE_CHOICE);
-        testQuestionDTO.setAnswers(List.of("Test Answer 1", "Test Answer 2"));
+        AnswerDTO testAnswerDTO = new AnswerDTO();
+        testAnswerDTO.setContent("Test Answer 1");
+        testQuestionDTO.getAnswers().add(testAnswerDTO);
         int numQuestions = testMatcher.getQuestions().size();
         given(matcherRepository.findById(testMatcher.getId())).willReturn(Optional.of(testMatcher));
         Matcher storedMatcher = adminService.createQuestion(testAdmin.getId(), testMatcher.getId(), testQuestionDTO);
@@ -178,7 +181,8 @@ class AdminServiceTest {
         assertEquals(testMatcher.getId(), createdQuestion.getMatcher().getId());
         assertEquals(testQuestionDTO.getContent()+"?", createdQuestion.getContent());
         assertEquals(testQuestionDTO.getQuestionType(), createdQuestion.getQuestionType());
-        assertEquals(testQuestionDTO.getAnswers(), createdQuestion.getAnswers().stream().map(Answer::getContent).toList());
+        assertEquals(testQuestionDTO.getAnswers().stream().map(AnswerDTO::getContent).toList(),
+                createdQuestion.getAnswers().stream().map(Answer::getContent).toList());
 
 
     }
