@@ -80,8 +80,9 @@ public class MatcherService {
     }
 
     public List<Matcher> initMatching() {
-        return matcherRepository.findByDueDateIsAfterAndStatus(ZonedDateTime.now(), Status.ACTIVE)
+        return matcherRepository.findByDueDateIsBeforeAndStatus(ZonedDateTime.now(), Status.ACTIVE)
                 .stream().map(matcher -> {
+                    log.info("Initialising matching procedure for Matcher {}", matcher.getId());
                     matcher.setStatus(Status.MATCHING);
                     Matcher updatedMatcher = matcherRepository.save(matcher);
                     return switch (updatedMatcher.getMatchingStrategy()) {

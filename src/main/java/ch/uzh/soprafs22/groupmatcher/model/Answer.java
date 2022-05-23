@@ -27,6 +27,10 @@ public class Answer {
     @ManyToMany(mappedBy = "selectedAnswers", cascade = CascadeType.ALL)
     private List<Student> students = new ArrayList<>();
 
+    public Integer getSelectedCount() {
+        return students.size();
+    }
+
     public Double calculateBalancedMatchingScore(Long otherStudentId) {
         boolean isSharedAnswer = students.stream().anyMatch(student -> student.getId().equals(otherStudentId));
         return question.getQuestionCategory().calculateBalancedMatchingScore(isSharedAnswer);

@@ -35,7 +35,7 @@ public class Student {
     @JoinColumn(name = "team_id")
     private Team team;
 
-    @JsonFormat(pattern = "dd.MM.yyyy")
+    @JsonFormat(pattern = "dd.MM.yyyy HH:mm")
     private ZonedDateTime submissionTimestamp;
 
     @ManyToMany(cascade = CascadeType.ALL)

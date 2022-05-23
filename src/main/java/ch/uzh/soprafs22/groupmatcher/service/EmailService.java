@@ -5,8 +5,9 @@ import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -16,6 +17,7 @@ import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
@@ -25,15 +27,18 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Service
 public class EmailService {
 
-    private MatcherRepository matcherRepository;
+    @Value("${app.frontend-url}")
+    private String frontendURL;
 
-    private JavaMailSender mailSender;
+    private final MatcherRepository matcherRepository;
 
-    private SpringTemplateEngine templateEngine;
+    private final JavaMailSender mailSender;
+
+    private final SpringTemplateEngine templateEngine;
 
     private MimeMessage composeMessage(String subject, String templateName, Map<String, Object> variables, String... recipients) {
         MimeMessage message = mailSender.createMimeMessage();
@@ -43,7 +48,7 @@ public class EmailService {
             Context context = new Context();
             context.setVariables(variables);
             helper.setFrom("notify@groupmatcher.ch", "groupmatcher");
-            helper.setTo(recipients);
+            helper.setBcc(recipients);
             helper.setSubject(subject);
             String html = templateEngine.process(templateName, context);
             helper.setText(html, true);
@@ -59,16 +64,17 @@ public class EmailService {
     public Map<String, Object> parseMatcherVariables(Matcher matcher) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
         HashMap<String, Object> variables = new HashMap<>();
+        variables.put("frontendURL", frontendURL);
         variables.put("id",matcher.getId());
         variables.put("courseName", matcher.getCourseName());
-        variables.put("date",matcher.getDueDate().format(formatter));
+        variables.put("dueDate", matcher.getDueDate().format(formatter));
         return variables;
     }
 
     public void sendAccountVerificationEmail(Admin admin) {
         Map<String, Object> variables = Map.of(
                 "name", admin.getName(),
-                "verifyURL", "https://group-matcher.herokuapp.com/verify/"+admin.getId());
+                "verifyURL", "%s/verify/%s".formatted(frontendURL, admin.getId()));
         mailSender.send(composeMessage("Verify Account", "email_verification.html", variables, admin.getEmail()));
     }
 
@@ -86,6 +92,7 @@ public class EmailService {
 
     public List<Matcher> sendMatchedGroupNotificationEmail() {
         return matcherRepository.findByStatus(Status.MATCHED).stream().map(matcher -> {
+            log.info("Sending matching results to students of Matcher {}", matcher.getId());
             matcher.getTeams().forEach(team -> {
                 Map<String, Object> variables = parseMatcherVariables(matcher);
                 mailSender.send(composeMessage("Group Introduction", "matching_results.html",
@@ -107,11 +114,15 @@ public class EmailService {
         return students.stream().map(Student::getEmail).toArray(String[]::new);
     }
 
+    @Transactional
     public List<Matcher> sendMatchingQuizInviteEmail() {
         return matcherRepository.findByPublishDateIsBeforeAndStatus(ZonedDateTime.now(), Status.DRAFT).stream().map(matcher -> {
+            log.info("Sending quiz invitation emails to students of Matcher {}", matcher.getId());
             Map<String, Object> variables = parseMatcherVariables(matcher);
-            mailSender.send(composeMessage("Link to Matching Quiz", "invitation.html",
-                    variables, mapToRecipients(matcher.getStudents())));
+            variables.put("matcherURL", "%s/matchers/%s".formatted(frontendURL, matcher.getId()));
+            mailSender.send(composeMessage(
+                    "You've been invited to take a Matching Quiz for "+matcher.getCourseName(),
+                    "invitation.html", variables, mapToRecipients(matcher.getStudents())));
             matcher.setStatus(Status.ACTIVE);
             return matcherRepository.save(matcher);
         }).toList();
