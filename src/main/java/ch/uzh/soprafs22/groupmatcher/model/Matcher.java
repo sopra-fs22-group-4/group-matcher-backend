@@ -68,4 +68,8 @@ public class Matcher {
         return dueDate.isBefore(ZonedDateTime.now());
     }
 
+    public long getSubmittedCount() {
+        return students.stream().filter(student -> student.getSubmissionTimestamp() != null).count();
+    }
+
 }
