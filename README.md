@@ -67,9 +67,46 @@ Tests for service components.
 
 ## Launch and Development
 
+### Install PostgreSQL
+The application uses PostgreSQL as the database for performing all the CRUD (Create, Read, Update and Delete) operations.
+
+You can download and install PostgreSQL on your computer [here](https://www.postgresql.org/download/)
+
+If you are new to PostgreSQL you can learn more about it in their official documentation [here](https://www.postgresql.org/docs/)
+
+### Setup email server
+The application uses email server for communication with and between users (incl. admin and students).
+You need to setup an email server before you run the application. 
+
+You can find some tutorials to help you 
+- [tutorial1](https://www.makeuseof.com/secure-email-server/) 
+- [tutorial2](https://helpdeskgeek.com/how-to/how-to-set-up-your-own-email-server/)
+
+### Clone the application.
+You can clone the backend repository from GitHub using
+- Clone the repo using git clone https://github.com/sopra-fs22-group-4/group-matcher-backend.git
+- Download the [zip](https://github.com/sopra-fs22-group-4/group-matcher-backend/archive/refs/heads/main.zip)
+- Open using github desktop [here](x-github-client://openRepo/https://github.com/sopra-fs22-group-4/group-matcher-backend)
+
+### Configure the application
+Edit the [application.yml](/src/main/resources/application.yml) to do the following:
+- Set the credentials for PostgreSQL to access the database.
+- Set the credentials for the email server you set up for the application.
+
+Set up the URL for the frontend of the application via the ENV variable in the [application.yml](/src/main/resources/application.yml).
+
+### Running the application
+Once the configurations mentioned above you can run the [application.java](/src/main/java/ch/uzh/soprafs22/groupmatcher/Application.java) to start the backend of the web app.
+
 ## Illustrations
 
 ## Roadmap
+Potential improvements or extensions may include:
+
+- Extending the questionnaire to include text questions, more background questions
+- Include more sophisticated logic for the matching process
+- Instead of having an e-mail service include a direct application service with notifications through the
+  application itself rather than e-mail
 
 ## Learn more
 - Java Documentation [Java Documentation](https://docs.oracle.com/en/java/)
