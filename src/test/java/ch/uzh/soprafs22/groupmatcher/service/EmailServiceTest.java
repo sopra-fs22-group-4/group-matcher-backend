@@ -69,7 +69,7 @@ class EmailServiceTest {
         List<Matcher> activatedMatchers = emailService.sendMatchingQuizInviteEmail();
         verify(mailSender).send(messageCaptor.capture());
         MimeMessage sentEmail = messageCaptor.getValue();
-        assertEquals("Link to Matching Quiz", sentEmail.getSubject());
+        assertEquals("You've been invited to take a Matching Quiz for "+testMatcher.getCourseName(), sentEmail.getSubject());
         assertEquals(testMatcher.getStudents().size(), sentEmail.getAllRecipients().length);
         assertEquals(1, activatedMatchers.size());
         assertEquals(testMatcher.getId(), activatedMatchers.get(0).getId());
@@ -88,7 +88,7 @@ class EmailServiceTest {
         assertTrue(sentEmailParts.getBodyPart(0).getContent().toString().contains("Welcome to groupmatcher!"));
         assertEquals("<bg.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(1)).getContentID());
         assertEquals("<logo.png>", ((MimeBodyPart) sentEmailParts.getBodyPart(2)).getContentID());
-        assertEquals("Verify Account", sentEmail.getSubject());
+        assertEquals("Welcome to groupmatcher!", sentEmail.getSubject());
     }
 
     @SneakyThrows

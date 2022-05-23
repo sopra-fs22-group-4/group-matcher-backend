@@ -75,7 +75,7 @@ public class EmailService {
         Map<String, Object> variables = Map.of(
                 "name", admin.getName(),
                 "verifyURL", "%s/verify/%s".formatted(frontendURL, admin.getId()));
-        mailSender.send(composeMessage("Verify Account", "email_verification.html", variables, admin.getEmail()));
+        mailSender.send(composeMessage("Welcome to groupmatcher!", "email_verification.html", variables, admin.getEmail()));
     }
 
     public void sendResponseVerificationEmail(Student student) {
