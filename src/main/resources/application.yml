@@ -33,5 +33,7 @@ server:
     include-message: always
   servlet:
     context-path: /api
+db-scheduler:
+  enabled: false
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
