@@ -190,7 +190,7 @@ public class AdminService {
     }
 
     public List<MatcherAdminOverview> getMatchersByAdminId(Long adminId) {
-        return matcherRepository.findByCollaborators_IdOrderByDueDateDesc(adminId);
+        return matcherRepository.findByCollaborators_IdOrderByCreatedAtDesc(adminId);
     }
 
     public List<Notification> getLatestNotificationsByAdminId(Long adminId) {
