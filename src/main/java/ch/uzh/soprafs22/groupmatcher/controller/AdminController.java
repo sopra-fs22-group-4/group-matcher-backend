@@ -3,18 +3,15 @@ package ch.uzh.soprafs22.groupmatcher.controller;
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.QuestionDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
-import ch.uzh.soprafs22.groupmatcher.model.Admin;
-import ch.uzh.soprafs22.groupmatcher.model.Matcher;
-import ch.uzh.soprafs22.groupmatcher.model.Notification;
-import ch.uzh.soprafs22.groupmatcher.model.Question;
+import ch.uzh.soprafs22.groupmatcher.model.*;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherAdminOverview;
-import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import ch.uzh.soprafs22.groupmatcher.service.AdminService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @AllArgsConstructor
 @RestController
@@ -54,9 +51,9 @@ public class AdminController {
         return adminService.getLatestNotificationsByAdminId(adminId);
     }
 
-    @GetMapping("/admins/{adminId}/submissions/latest")
-    public List<Submission> getLatestSubmissions(@PathVariable Long adminId) {
-        return adminService.getLatestSubmissionsByAdminId(adminId);
+    @GetMapping("/admins/{adminId}/submissions/daily")
+    public Map<String, Integer> getDailySubmissionsCount(@PathVariable Long adminId) {
+        return adminService.getDailySubmissionsCountByAdminId(adminId);
     }
 
     @GetMapping("/admins/{adminId}/matchers/{matcherId}")
@@ -80,11 +77,6 @@ public class AdminController {
         return adminService.createQuestion(adminId, matcherId, newQuestion);
     }
 
-    @GetMapping("/admins/{adminId}/matchers/{matcherId}/submissions/latest")
-    public List<Submission> getLatestSubmissions(@PathVariable Long adminId, @PathVariable Long matcherId) {
-        return adminService.getLatestSubmissionsByMatcherId(adminId, matcherId);
-    }
-
     @PutMapping("/admins/{adminId}/questions/{questionId}")
     public Question updateQuestion(@PathVariable Long adminId, @PathVariable Long questionId, @RequestBody QuestionDTO updatedQuestion) {
         return adminService.updateQuestion(adminId, questionId, updatedQuestion);
@@ -93,6 +85,16 @@ public class AdminController {
     @DeleteMapping("/admins/{adminId}/questions/{questionId}")
     public void deleteQuestion(@PathVariable Long adminId, @PathVariable Long questionId) {
         adminService.deleteQuestion(adminId, questionId);
+    }
+
+    @PutMapping("/admins/{adminId}/students/{studentId}")
+    public Student updateStudent(@PathVariable Long adminId, @PathVariable Long studentId, @RequestBody UserDTO updatedStudent) {
+        return adminService.updateStudent(adminId, studentId, updatedStudent);
+    }
+
+    @DeleteMapping("/admins/{adminId}/students/{studentId}")
+    public void deleteStudent(@PathVariable Long adminId, @PathVariable Long studentId) {
+        adminService.deleteStudent(adminId, studentId);
     }
 
     @PutMapping("/admins/{adminId}/profile")

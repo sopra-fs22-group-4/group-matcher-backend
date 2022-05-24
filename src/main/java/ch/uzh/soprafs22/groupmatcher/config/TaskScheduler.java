@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Configuration;
 import java.time.Duration;
 
 import static com.github.kagkarlsson.scheduler.task.schedule.Schedules.fixedDelay;
-import static java.time.ZonedDateTime.now;
 
 @Slf4j
 @Configuration
@@ -20,30 +19,24 @@ public class TaskScheduler {
     @Bean
     Task<Void> sendMatchingQuizInviteEmailTask(EmailService emailService) {
         return Tasks
-                .recurring("send-invite", fixedDelay(Duration.ofMinutes(1)))
-                .execute((taskInstance, executionContext) -> {
-                    log.info("Checking if there are matchers scheduled to be published before {}", now());
-                    emailService.sendMatchingQuizInviteEmail();
-                });
+                .recurring("send-invite", fixedDelay(Duration.ofMinutes(3)))
+                .execute((taskInstance, executionContext) -> emailService.sendMatchingQuizInviteEmail()
+                        .forEach(matcher -> log.info("Successfully activated Matcher {}", matcher.getId())));
     }
 
     @Bean
     Task<Void> initMatchingTask(MatcherService matcherService) {
         return Tasks
-                .recurring("init-matching", fixedDelay(Duration.ofMinutes(1)))
-                .execute((taskInstance, executionContext) -> {
-                    log.info("Checking if there are matchers due before {}", now());
-                    matcherService.initMatching();
-                });
+                .recurring("init-matching", fixedDelay(Duration.ofMinutes(3)))
+                .execute((taskInstance, executionContext) -> matcherService.initMatching().forEach(matcher ->
+                        log.info("Completed matching procedure for Matcher {}", matcher.getId())));
     }
 
     @Bean
     Task<Void> sendMatchedGroupNotificationEmailTask(EmailService emailService) {
         return Tasks
-                .recurring("notify-groups", fixedDelay(Duration.ofMinutes(1)))
-                .execute((taskInstance, executionContext) -> {
-                    log.info("Checking if any of the active matching procedures are finished...");
-                    emailService.sendMatchedGroupNotificationEmail();
-                });
+                .recurring("notify-groups", fixedDelay(Duration.ofMinutes(3)))
+                .execute((taskInstance, executionContext) -> emailService.sendMatchedGroupNotificationEmail()
+                        .forEach(matcher -> log.info("Successfully completed matching for Matcher {}", matcher.getId())));
     }
 }

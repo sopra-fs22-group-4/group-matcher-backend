@@ -3,6 +3,7 @@ package ch.uzh.soprafs22.groupmatcher;
 import lombok.NonNull;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -33,5 +34,13 @@ public class Application {
         filter.setMaxPayloadLength(10000);
         filter.setIncludeHeaders(false);
         return filter;
+    }
+
+    @Bean
+    public FilterRegistrationBean<CommonsRequestLoggingFilter> filterRegistrationBean() {
+        FilterRegistrationBean<CommonsRequestLoggingFilter> registration = new FilterRegistrationBean<>(logFilter());
+        registration.addUrlPatterns("/api/admins/*", "/api/matchers/*", "/register", "/login");
+        return registration;
+
     }
 }

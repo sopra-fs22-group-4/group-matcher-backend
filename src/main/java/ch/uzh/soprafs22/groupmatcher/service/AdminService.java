@@ -1,11 +1,11 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
+import ch.uzh.soprafs22.groupmatcher.constant.Status;
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.QuestionDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.*;
 import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherAdminOverview;
-import ch.uzh.soprafs22.groupmatcher.model.projections.Submission;
 import ch.uzh.soprafs22.groupmatcher.repository.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +16,11 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.IntStream;
 
 @Slf4j
 @AllArgsConstructor
@@ -58,7 +60,7 @@ public class AdminService {
     }
 
     private Admin findOrCreateAccount(UserDTO collaborator) {
-        return Optional.of(collaborator.getId()).map(this::getAdminById).or(() ->
+        return Optional.ofNullable(collaborator.getId()).map(this::getAdminById).or(() ->
                 adminRepository.findByEmail(collaborator.getEmail())).orElse(createCollaborator(collaborator));
     }
 
@@ -81,6 +83,11 @@ public class AdminService {
         if (storedQuestion.getMatcher().getCollaborators().stream().noneMatch(admin -> admin.getId().equals(adminId)))
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Matchers can be edited by admins only");
         return storedQuestion;
+    }
+
+    private Student getStudentById(Long studentId) {
+        return studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No student found for the given ID"));
     }
 
     public Admin createAdmin(UserDTO userDTO) {
@@ -119,11 +126,9 @@ public class AdminService {
 
     public Matcher createQuestion(Long adminId, Long matcherId, QuestionDTO questionDTO) {
         Matcher storedMatcher = getMatcherById(adminId, matcherId);
-        if (storedMatcher.isPublished())
-            throw new ResponseStatusException(HttpStatus.METHOD_NOT_ALLOWED, "Matchers cannot be edited after publication");
+        if (storedMatcher.getStatus().equals(Status.ACTIVE))
+            throw new ResponseStatusException(HttpStatus.METHOD_NOT_ALLOWED, "Matchers cannot be edited after activation");
         Question newQuestion = modelMapper.map(questionDTO, Question.class);
-        if (!newQuestion.getContent().endsWith("?"))
-            newQuestion.setContent(newQuestion.getContent() + "?");
         newQuestion.setMatcher(storedMatcher);
         newQuestion.getAnswers().forEach(answer -> answer.setQuestion(newQuestion));
         storedMatcher.getQuestions().add(newQuestion);
@@ -165,9 +170,23 @@ public class AdminService {
         return questionRepository.save(existingQuestion);
     }
 
-    public void deleteQuestion(Long adminId, Long matcherId) {
-        Question existingQuestion = getQuestionById(adminId, matcherId);
+    public void deleteQuestion(Long adminId, Long questionId) {
+        Question existingQuestion = getQuestionById(adminId, questionId);
+        notifyAndSave(existingQuestion.getMatcher(), adminId, " deleted question");
         questionRepository.delete(existingQuestion);
+    }
+
+    public Student updateStudent(Long adminId, Long studentId, UserDTO studentDTO) {
+        Student existingStudent = getStudentById(studentId);
+        modelMapper.map(studentDTO, existingStudent);
+        notifyAndSave(existingStudent.getMatcher(), adminId, " updated student details");
+        return studentRepository.save(existingStudent);
+    }
+
+    public void deleteStudent(Long adminId, Long studentId) {
+        Student existingStudent = getStudentById(studentId);
+        notifyAndSave(existingStudent.getMatcher(), adminId, " deleted a student");
+        studentRepository.delete(existingStudent);
     }
 
     public List<MatcherAdminOverview> getMatchersByAdminId(Long adminId) {
@@ -178,15 +197,16 @@ public class AdminService {
         return notificationRepository.findByMatcher_Collaborators_IdOrderByCreatedAtDesc(adminId, Pageable.ofSize(30));
     }
 
-    public List<Submission> getLatestSubmissionsByAdminId(Long adminId) {
-        return studentRepository.findByMatcher_Collaborators_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(
-                adminId, Pageable.ofSize(10));
-    }
-
-    public List<Submission> getLatestSubmissionsByMatcherId(Long adminId, Long matcherId) {
-        getMatcherById(adminId, matcherId); // Verify the admin can access the matcher
-        return studentRepository.findByMatcher_IdAndSubmissionTimestampNotNullOrderBySubmissionTimestampDesc(
-                matcherId, Pageable.ofSize(10));
+    public Map<String, Integer> getDailySubmissionsCountByAdminId(Long adminId) {
+        ZonedDateTime aWeekAgo = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS).minus(7, ChronoUnit.DAYS);
+        Map<String, Integer> weeklyCounts = new HashMap<>();
+        IntStream.range(0, 7).forEach(numDays -> {
+            ZonedDateTime start = aWeekAgo.plus(numDays, ChronoUnit.DAYS);
+            weeklyCounts.put(start.format(DateTimeFormatter.ofPattern("dd/MM")),
+                    studentRepository.countByMatcher_Collaborators_IdAndSubmissionTimestampBetween(
+                            adminId, start, aWeekAgo.plus(numDays + 1L, ChronoUnit.DAYS)));
+        });
+        return weeklyCounts;
     }
 
     public Admin updateAdmin(Long adminId, UserDTO admin) {

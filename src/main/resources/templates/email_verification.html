@@ -4,18 +4,13 @@
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Verify Your Email</title>
-    <style>
-        a:hover {
-            background-color: #766bef;
-        }
-    </style>
+    <title>Verify Your Email Address</title>
 </head>
 <body style="font-family: Helvetica, sans-serif;">
 <table style="min-width: 100%; border-collapse: separate; border-spacing: 0 2rem; background-color: #877ef1;">
     <tr style="background-color: #877ef1;">
         <td style="text-align: center;padding: 1rem;">
-            <img src="../logo.png" th:src="|cid:logo.png|" style="height: 35%;width: 35%;"></img>
+            <a th:href="${frontendURL}"><img src="../logo.png" th:src="|cid:logo.png|" style="height: 35%;width: 35%;"></img></a>
         </td>
     </tr>
     <tr style="background-image: url('../bg.png');background-size: 100% auto;background-color: white;"
@@ -24,25 +19,27 @@
             <h1 style="color: #222222;font-size: 2.5rem;text-align: center;">
                 <span style="background: white;">Welcome to groupmatcher!</span>
             </h1>
-            <p>
-                <span style="background: white;white-space: pre-line; line-height: 1.5;">
+            <p style="padding: 3rem; line-height: 1.5;">
+                <span style="background: white;white-space: pre-line;">
                     Wowwee! It's a match ;) Thanks for registering with groupmatcher.
                     We're so excited to have you onboard.
                 </span>
-            </p>
-            <p style="padding: 3rem;">
-                <span style="background: white;">
+                <span style="background: white;white-space: pre-line;">
                     Before we get started, we'll need to verify your email.
                 </span>
             </p>
             <a th:href="${verifyURL}" style="padding: 1rem; font-weight: bold; font-size: 1.2rem; letter-spacing: -0.5px;
             text-align: center; text-decoration: none; color: white; border-radius: 7px; background-color: #877EF1;
-            border: none; cursor: pointer;">Verify Email</a>
+            border: none; cursor: pointer;"
+               onmouseover="this.style.backgroundColor='#766bef'"
+               onmouseleave="this.style.backgroundColor='#877EF1'">
+                Verify Email
+            </a>
         </td>
     </tr>
     <tr style="background-color: #877ef1;">
         <td style="text-align: center;padding: 0.5rem;">
-            <img src="../tagline.png" th:src="|cid:tagline.png|" style="height: 20%;width: 20%;"></img>
+            <a th:href="${frontendURL}"><img src="../tagline.png" th:src="|cid:tagline.png|" style="height: 20%;width: 20%;"></img></a>
         </td>
     </tr>
 </table>

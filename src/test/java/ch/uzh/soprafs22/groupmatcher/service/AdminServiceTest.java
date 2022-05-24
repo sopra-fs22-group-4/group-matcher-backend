@@ -4,6 +4,7 @@ import ch.uzh.soprafs22.groupmatcher.TestingUtils;
 import ch.uzh.soprafs22.groupmatcher.config.AppConfig;
 import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
+import ch.uzh.soprafs22.groupmatcher.constant.Status;
 import ch.uzh.soprafs22.groupmatcher.dto.AnswerDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.QuestionDTO;
@@ -179,7 +180,7 @@ class AdminServiceTest {
         assertEquals(numQuestions + 1, testMatcher.getQuestions().size());
         Question createdQuestion = storedMatcher.getQuestions().get(numQuestions);
         assertEquals(testMatcher.getId(), createdQuestion.getMatcher().getId());
-        assertEquals(testQuestionDTO.getContent()+"?", createdQuestion.getContent());
+        assertEquals(testQuestionDTO.getContent(), createdQuestion.getContent());
         assertEquals(testQuestionDTO.getQuestionType(), createdQuestion.getQuestionType());
         assertEquals(testQuestionDTO.getAnswers().stream().map(AnswerDTO::getContent).toList(),
                 createdQuestion.getAnswers().stream().map(Answer::getContent).toList());
@@ -245,9 +246,10 @@ class AdminServiceTest {
     }
 
     @Test
-    void createQuestionAfterMatcherIsPublished() {
+    void createQuestionInActiveMatcher() {
         Long adminId = testAdmin.getId();
         Long matcherId = testMatcher.getId();
+        testMatcher.setStatus(Status.ACTIVE);
         assertThrows(ResponseStatusException.class, () -> adminService.createQuestion(adminId, matcherId, testQuestionDTO));
     }
 

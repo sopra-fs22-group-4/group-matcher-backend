@@ -18,7 +18,7 @@ public interface MatcherRepository extends JpaRepository<Matcher, Long> {
 
     List<Matcher> findByPublishDateIsBeforeAndStatus(ZonedDateTime sendAt, Status status);
 
-    List<Matcher> findByDueDateIsAfterAndStatus(ZonedDateTime dueAt, Status status);
+    List<Matcher> findByDueDateIsBeforeAndStatus(ZonedDateTime dueAt, Status status);
 
     List<Matcher> findByStatus(Status status);
 }
