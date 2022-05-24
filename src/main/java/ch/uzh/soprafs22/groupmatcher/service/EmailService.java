@@ -48,7 +48,7 @@ public class EmailService {
             Context context = new Context();
             context.setVariables(variables);
             helper.setFrom("notify@groupmatcher.ch", "groupmatcher");
-            helper.setBcc(recipients);
+            helper.setCc(recipients);
             helper.setSubject(subject);
             String html = templateEngine.process(templateName, context);
             helper.setText(html, true);
@@ -90,6 +90,7 @@ public class EmailService {
 //        mailSender.send(composeMessage("You are invited!", "collaborator_invite.html", variables, admin.getEmail()));
     }
 
+    @Transactional
     public List<Matcher> sendMatchedGroupNotificationEmail() {
         return matcherRepository.findByStatus(Status.MATCHED).stream().map(matcher -> {
             log.info("Sending matching results to students of Matcher {}", matcher.getId());

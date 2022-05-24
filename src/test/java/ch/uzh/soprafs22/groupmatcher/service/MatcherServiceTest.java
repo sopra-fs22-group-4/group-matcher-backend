@@ -11,6 +11,7 @@ import ch.uzh.soprafs22.groupmatcher.model.Student;
 import ch.uzh.soprafs22.groupmatcher.repository.AnswerRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
+import ch.uzh.soprafs22.groupmatcher.repository.TeamRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,10 +36,15 @@ class MatcherServiceTest {
 
     @MockBean
     private MatcherRepository matcherRepository;
+
     @MockBean
     private StudentRepository studentRepository;
+
     @MockBean
     private AnswerRepository answerRepository;
+
+    @MockBean
+    private TeamRepository teamRepository;
 
     @Autowired
     private MatcherService matcherService;

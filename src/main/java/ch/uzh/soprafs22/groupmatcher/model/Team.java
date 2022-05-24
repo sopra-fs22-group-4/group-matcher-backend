@@ -19,12 +19,6 @@ public class Team {
     @GeneratedValue
     private Long id;
 
-    private Double similarityScore;
-
-    private Double knowledgeScore;
-
-    private Double skillScore;
-
     private boolean notified = false;
 
     @JsonIgnore
@@ -34,6 +28,9 @@ public class Team {
 
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL)
     private List<Student> students = new ArrayList<>();
+
+    @ElementCollection
+    private List<Double> matchingScores = new ArrayList<>();
 
     public Team(Student student) {
         this.students.add(student);

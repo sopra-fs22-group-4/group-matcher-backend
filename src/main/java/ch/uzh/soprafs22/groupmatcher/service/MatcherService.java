@@ -10,6 +10,7 @@ import ch.uzh.soprafs22.groupmatcher.model.projections.MatcherOverview;
 import ch.uzh.soprafs22.groupmatcher.repository.AnswerRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
 import ch.uzh.soprafs22.groupmatcher.repository.StudentRepository;
+import ch.uzh.soprafs22.groupmatcher.repository.TeamRepository;
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 import de.lmu.ifi.dbs.elki.algorithm.clustering.kmeans.initialization.KMeansInitialization;
@@ -37,6 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import tutorial.clustering.SameSizeKMeansAlgorithm;
 
+import javax.transaction.Transactional;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -51,8 +53,12 @@ import static java.time.ZonedDateTime.now;
 public class MatcherService {
 
     private MatcherRepository matcherRepository;
+
     private StudentRepository studentRepository;
+
     private AnswerRepository answerRepository;
+
+    private TeamRepository teamRepository;
 
     public Student getStudent(Long matcherId, String studentEmail) {
         return studentRepository.getByMatcherIdAndEmail(matcherId, studentEmail)
@@ -79,12 +85,13 @@ public class MatcherService {
         return studentRepository.save(student);
     }
 
+    @Transactional
     public List<Matcher> initMatching() {
         return matcherRepository.findByDueDateIsBeforeAndStatus(ZonedDateTime.now(), Status.ACTIVE)
                 .stream().map(matcher -> {
-                    log.info("Initialising matching procedure for Matcher {}", matcher.getId());
                     matcher.setStatus(Status.MATCHING);
                     Matcher updatedMatcher = matcherRepository.save(matcher);
+                    log.info("Initialising matching procedure for Matcher {}", matcher.getId());
                     return switch (updatedMatcher.getMatchingStrategy()) {
                         case MOST_SIMILAR -> runMostSimilarModel(updatedMatcher);
                         case BALANCED_SKILLS -> runBalancedSkillsModel(updatedMatcher);
@@ -150,6 +157,7 @@ public class MatcherService {
                 if ((team.getStudents().size() + newMembers.getStudents().size()) > matcher.getGroupSize())
                     studentsGraph.removeEdge(edge);
                 else {
+                    team.getMatchingScores().add(studentsGraph.getEdgeWeight(edge));
                     Graphs.neighborListOf(studentsGraph, newMembers).forEach(newMembersNeighbor ->
                             Optional.ofNullable(studentsGraph.getEdge(team, newMembersNeighbor)).ifPresent(teamToNeighborEdge -> {
                                 DefaultWeightedEdge newMembersNeighborEdge = studentsGraph.getEdge(newMembers, newMembersNeighbor);
@@ -163,7 +171,12 @@ public class MatcherService {
                     team.getStudents().addAll(newMembers.getStudents());
                 }
             });
-        matcher.getTeams().addAll(studentsGraph.vertexSet());
+        studentsGraph.vertexSet().forEach(team -> {
+            team.setMatcher(matcher);
+            team.getStudents().forEach(student -> student.setTeam(team));
+            matcher.getTeams().add(team);
+            teamRepository.save(team);
+        });
         matcher.setStatus(Status.MATCHED);
         return matcherRepository.save(matcher);
     }
