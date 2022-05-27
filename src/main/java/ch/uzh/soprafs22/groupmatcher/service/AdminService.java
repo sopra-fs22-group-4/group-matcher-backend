@@ -1,6 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
-import ch.uzh.soprafs22.groupmatcher.constant.Status;
+import ch.uzh.soprafs22.groupmatcher.constant.AdminStatus;
+import ch.uzh.soprafs22.groupmatcher.constant.MatcherStatus;
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.QuestionDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
@@ -54,14 +55,17 @@ public class AdminService {
     }
 
     private Admin createCollaborator(UserDTO collaborator) {
-        Admin createdAdmin = adminRepository.save(modelMapper.map(collaborator, Admin.class));
-        emailService.sendCollaboratorInviteEmail(createdAdmin);
-        return createdAdmin;
+        Admin createdAdmin = modelMapper.map(collaborator, Admin.class);
+        createdAdmin.setStatus(AdminStatus.INVITED);
+        return adminRepository.save(createdAdmin);
     }
 
-    private Admin findOrCreateAccount(UserDTO collaborator) {
-        return Optional.ofNullable(collaborator.getId()).map(this::getAdminById).or(() ->
-                adminRepository.findByEmail(collaborator.getEmail())).orElse(createCollaborator(collaborator));
+    private void findOrCreateAccount(Matcher matcher, UserDTO collaboratorDTO) {
+        Admin collaborator = Optional.ofNullable(collaboratorDTO.getId()).map(this::getAdminById)
+                .or(() -> adminRepository.findByEmail(collaboratorDTO.getEmail()))
+                .orElse(createCollaborator(collaboratorDTO));
+        emailService.sendCollaboratorInviteEmail(matcher, collaborator);
+        matcher.getCollaborators().add(collaborator);
     }
 
     private Admin getAdminById(Long adminId) {
@@ -93,7 +97,9 @@ public class AdminService {
     public Admin createAdmin(UserDTO userDTO) {
         if (adminRepository.existsByEmail(userDTO.getEmail()))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with the given e-mail already exists");
-        Admin createdAdmin = adminRepository.save(modelMapper.map(userDTO, Admin.class));
+        Admin newAdmin = modelMapper.map(userDTO, Admin.class);
+        newAdmin.setStatus(AdminStatus.REGISTERED);
+        Admin createdAdmin = adminRepository.save(newAdmin);
         emailService.sendAccountVerificationEmail(createdAdmin);
         return createdAdmin;
     }
@@ -103,14 +109,14 @@ public class AdminService {
                 .orElseThrow(() -> adminRepository.findByEmail(userDTO.getEmail())
                         .map(foundEmail -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Incorrect password, please try again"))
                         .orElse(new ResponseStatusException(HttpStatus.NOT_FOUND, "No account found for the given e-mail")));
-        if (!storedAdmin.isVerified())
+        if (storedAdmin.getStatus() != AdminStatus.VERIFIED)
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unverified account, please check your inbox");
         return storedAdmin;
     }
 
     public Admin verifyAccount(Long adminId) {
         Admin storedUser = getAdminById(adminId);
-        storedUser.setVerified(true);
+        storedUser.setStatus(AdminStatus.VERIFIED);
         return adminRepository.save(storedUser);
     }
 
@@ -119,14 +125,13 @@ public class AdminService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No account found for the given ID"));
         Matcher newMatcher = modelMapper.map(matcherDTO, Matcher.class);
         newMatcher.getCollaborators().add(storedAdmin);
-        matcherDTO.getCollaborators().forEach(collaboratorDTO ->
-                newMatcher.getCollaborators().add(findOrCreateAccount(collaboratorDTO)));
+        matcherDTO.getCollaborators().forEach(collaboratorDTO -> findOrCreateAccount(newMatcher, collaboratorDTO));
         return matcherRepository.save(newMatcher);
     }
 
     public Matcher createQuestion(Long adminId, Long matcherId, QuestionDTO questionDTO) {
         Matcher storedMatcher = getMatcherById(adminId, matcherId);
-        if (storedMatcher.getStatus().equals(Status.ACTIVE))
+        if (storedMatcher.getStatus().equals(MatcherStatus.ACTIVE))
             throw new ResponseStatusException(HttpStatus.METHOD_NOT_ALLOWED, "Matchers cannot be edited after activation");
         Question newQuestion = modelMapper.map(questionDTO, Question.class);
         newQuestion.setMatcher(storedMatcher);
@@ -147,9 +152,8 @@ public class AdminService {
                     existingMatcher.getStudents().add(newStudent);
                 });
         matcherDTO.getCollaborators().forEach(collaboratorDTO -> {
-            Admin collaborator = findOrCreateAccount(collaboratorDTO);
-            if (!adminRepository.existsByMatchers_IdAndId(matcherId, collaborator.getId()))
-                existingMatcher.getCollaborators().add(collaborator);
+            if (!adminRepository.existsByMatchers_IdAndEmail(matcherId, collaboratorDTO.getEmail()))
+                findOrCreateAccount(existingMatcher, collaboratorDTO);
         });
         return notifyAndSave(existingMatcher, adminId, " updated matcher settings");
     }

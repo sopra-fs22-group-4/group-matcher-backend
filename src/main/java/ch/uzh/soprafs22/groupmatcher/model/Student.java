@@ -31,7 +31,7 @@ public class Student {
     private Matcher matcher;
 
     @JsonIgnore
-    @ManyToOne( cascade = CascadeType.ALL )
+    @ManyToOne
     @JoinColumn(name = "team_id")
     private Team team;
 

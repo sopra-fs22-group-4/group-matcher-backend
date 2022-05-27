@@ -2,9 +2,10 @@ package ch.uzh.soprafs22.groupmatcher.service;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
 import ch.uzh.soprafs22.groupmatcher.config.AppConfig;
+import ch.uzh.soprafs22.groupmatcher.constant.AdminStatus;
 import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
 import ch.uzh.soprafs22.groupmatcher.constant.QuestionType;
-import ch.uzh.soprafs22.groupmatcher.constant.Status;
+import ch.uzh.soprafs22.groupmatcher.constant.MatcherStatus;
 import ch.uzh.soprafs22.groupmatcher.dto.AnswerDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.MatcherDTO;
 import ch.uzh.soprafs22.groupmatcher.dto.QuestionDTO;
@@ -95,7 +96,7 @@ class AdminServiceTest {
 
     @Test
     void checkValidLogin_successful() {
-        testAdmin.setVerified(true);
+        testAdmin.setStatus(AdminStatus.VERIFIED);
         given(adminRepository.findByEmailAndPassword(testUserDTO.getEmail(), testUserDTO.getPassword())).willReturn(Optional.of(testAdmin));
         Admin returnedAdmin = adminService.validateLogin(testUserDTO);
         assertEquals(testAdmin.getId(), returnedAdmin.getId());
@@ -119,7 +120,7 @@ class AdminServiceTest {
 
     @Test
     void checkValidLogin_wrongPassword_throwsException() {
-        testAdmin.setVerified(true);
+        testAdmin.setStatus(AdminStatus.VERIFIED);
         testAdmin.setPassword("wrongPassword");
         given(adminRepository.findByEmail(testUserDTO.getEmail())).willReturn(Optional.of(testAdmin));
         assertThrows(ResponseStatusException.class, () -> adminService.validateLogin(testUserDTO));
@@ -249,7 +250,7 @@ class AdminServiceTest {
     void createQuestionInActiveMatcher() {
         Long adminId = testAdmin.getId();
         Long matcherId = testMatcher.getId();
-        testMatcher.setStatus(Status.ACTIVE);
+        testMatcher.setStatus(MatcherStatus.ACTIVE);
         assertThrows(ResponseStatusException.class, () -> adminService.createQuestion(adminId, matcherId, testQuestionDTO));
     }
 
@@ -257,7 +258,7 @@ class AdminServiceTest {
     void loginWithNonValidatedAccount() {
         given(adminRepository.findByEmailAndPassword(testAdmin.getEmail(), testAdmin.getPassword()))
                 .willReturn(Optional.of(testAdmin));
-        testAdmin.setVerified(false);
+        testAdmin.setStatus(AdminStatus.REGISTERED);
         testUserDTO.setEmail(testAdmin.getEmail());
         testUserDTO.setPassword(testAdmin.getPassword());
         assertThrows(ResponseStatusException.class, () -> adminService.validateLogin(testUserDTO));

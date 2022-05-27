@@ -1,12 +1,14 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
-import ch.uzh.soprafs22.groupmatcher.constant.Status;
+import ch.uzh.soprafs22.groupmatcher.constant.MatcherStatus;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
 import ch.uzh.soprafs22.groupmatcher.model.Student;
 import ch.uzh.soprafs22.groupmatcher.repository.MatcherRepository;
+import ch.uzh.soprafs22.groupmatcher.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -22,7 +24,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,8 @@ public class EmailService {
     private String frontendURL;
 
     private final MatcherRepository matcherRepository;
+
+    private final TeamRepository teamRepository;
 
     private final JavaMailSender mailSender;
 
@@ -62,6 +65,11 @@ public class EmailService {
         return message;
     }
 
+    private void sendEmail(String subject, String templateName, Map<String, Object> variables, String... recipients) {
+        if (ObjectUtils.isNotEmpty(recipients))
+            mailSender.send(composeMessage(subject, templateName, variables, recipients));
+    }
+
     public Map<String, Object> parseMatcherVariables(Matcher matcher) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
         HashMap<String, Object> variables = new HashMap<>();
@@ -73,54 +81,48 @@ public class EmailService {
     }
 
     public void sendAccountVerificationEmail(Admin admin) {
-        Map<String, Object> variables = Map.of(
-                "name", admin.getName(),
-                "verifyURL", "%s/verify/%s".formatted(frontendURL, admin.getId()));
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("name", admin.getName());
+        variables.put("verifyURL", "%s/verify/%s".formatted(frontendURL, admin.getId()));
         mailSender.send(composeMessage("Welcome to groupmatcher!", "email_verification.html", variables, admin.getEmail()));
     }
 
     public void sendResponseVerificationEmail(Student student) {
-        Map<String, Object> variables = Map.of("name", student.getName(),
-                "matcherId", student.getMatcher().getId(), "studentId", student.getId());
-        mailSender.send(composeMessage("Verify Response", "email_verification.html", variables, student.getEmail()));
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("name", student.getName());
+        variables.put("matcherId", student.getMatcher().getId());
+        variables.put("studentId", student.getId());
+        sendEmail("Verify Response", "email_verification.html", variables, student.getEmail());
     }
 
-    public void sendCollaboratorInviteEmail(Admin admin) {
-//        if (Strings.isNullOrEmpty(collaborator.getPassword())) then include password reset link
-//        Map<String, Object> variables = Map.of("name", admin.getName());
-//        mailSender.send(composeMessage("You are invited!", "collaborator_invite.html", variables, admin.getEmail()));
+    public void sendCollaboratorInviteEmail(Matcher matcher, Admin collaborator) {
+        Map<String, Object> variables = parseMatcherVariables(matcher);
+        variables.put("joinURL", collaborator.isVerified() ? frontendURL + "/login" :
+                "%s/reset/%s".formatted(frontendURL, collaborator.getId()));
+        variables.put("buttonLabel", collaborator.isVerified() ? "Join Team" : "Create Account");
+        sendEmail("You are invited!", "collaborator_invite.html", variables, collaborator.getEmail());
     }
 
     @Transactional
     public List<Matcher> sendMatchedGroupNotificationEmail() {
-        return matcherRepository.findByStatus(Status.MATCHED).stream().map(matcher -> {
+        return matcherRepository.findByStatus(MatcherStatus.MATCHED).stream().map(matcher -> {
             log.info("Sending matching results to students of Matcher {}", matcher.getId());
             matcher.getTeams().forEach(team -> {
                 Map<String, Object> variables = parseMatcherVariables(matcher);
-                List<Student> students = team.getStudents();
-                List<String> studentNames = new ArrayList<>();
-                List<String> studentEmails = new ArrayList<>();
-
-                students.forEach( student -> {
-                    studentNames.add(student.getName());
-                    studentEmails.add(student.getEmail());
-                });
-
-                variables.put("names", studentNames);
-                variables.put("emails", studentEmails);
-                mailSender.send(composeMessage("Group Introduction", "matching_results.html",
-                        variables, mapToRecipients(team.getStudents())));
+                variables.put("students", team.getStudents());
+                sendEmail("Group Introduction", "matching_results.html",
+                        variables, mapToRecipients(team.getStudents()));
                 team.setNotified(true);
+                teamRepository.save(team);
             });
-            matcher.setStatus(Status.COMPLETED);
+            matcher.setStatus(MatcherStatus.COMPLETED);
             return matcherRepository.save(matcher);
         }).toList();
     }
 
     public void sendReminder(Matcher matcher) {
         Map<String, Object> variables = parseMatcherVariables(matcher);
-        mailSender.send(composeMessage("Reminder", "reminder.html",
-                variables, mapToRecipients(matcher.getStudents())));
+        sendEmail("Reminder", "reminder.html", variables, mapToRecipients(matcher.getStudents()));
     }
 
     public String[] mapToRecipients(List<Student> students) {
@@ -129,14 +131,13 @@ public class EmailService {
 
     @Transactional
     public List<Matcher> sendMatchingQuizInviteEmail() {
-        return matcherRepository.findByPublishDateIsBeforeAndStatus(ZonedDateTime.now(), Status.DRAFT).stream().map(matcher -> {
+        return matcherRepository.findByPublishDateIsBeforeAndStatus(ZonedDateTime.now(), MatcherStatus.DRAFT).stream().map(matcher -> {
             log.info("Sending quiz invitation emails to students of Matcher {}", matcher.getId());
             Map<String, Object> variables = parseMatcherVariables(matcher);
             variables.put("matcherURL", "%s/matchers/%s".formatted(frontendURL, matcher.getId()));
-            mailSender.send(composeMessage(
-                    "You've been invited to take a Matching Quiz for "+matcher.getCourseName(),
-                    "invitation.html", variables, mapToRecipients(matcher.getStudents())));
-            matcher.setStatus(Status.ACTIVE);
+            sendEmail("You've been invited to take a Matching Quiz for "+matcher.getCourseName(),
+                    "invitation.html", variables, mapToRecipients(matcher.getStudents()));
+            matcher.setStatus(MatcherStatus.ACTIVE);
             return matcherRepository.save(matcher);
         }).toList();
     }

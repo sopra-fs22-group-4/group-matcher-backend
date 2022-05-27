@@ -1,6 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.controller;
 
 import ch.uzh.soprafs22.groupmatcher.TestingUtils;
+import ch.uzh.soprafs22.groupmatcher.constant.AdminStatus;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Admin;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
@@ -57,7 +58,7 @@ class AdminControllerTest {
 
     @Test
     void loginAdmin_successful() throws Exception {
-        testAdmin.setVerified(true);
+        testAdmin.setStatus(AdminStatus.VERIFIED);
         given(adminService.validateLogin(any(UserDTO.class))).willReturn(testAdmin);
         mockMvc.perform(post("/login")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -82,7 +83,7 @@ class AdminControllerTest {
 
     @Test
     void updateStudentToMatcher_successful() throws Exception {
-        testAdmin.setVerified(true);
+        testAdmin.setStatus(AdminStatus.VERIFIED);
         given(adminService.verifyAccount(anyLong())).willReturn(testAdmin);
         mockMvc.perform(put("/admins/{adminId}/verify", testAdmin.getId())
                         .contentType(MediaType.APPLICATION_JSON))

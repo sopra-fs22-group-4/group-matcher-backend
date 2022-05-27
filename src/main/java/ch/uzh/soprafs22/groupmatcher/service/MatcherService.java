@@ -1,6 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.service;
 
-import ch.uzh.soprafs22.groupmatcher.constant.Status;
+import ch.uzh.soprafs22.groupmatcher.constant.MatcherStatus;
 import ch.uzh.soprafs22.groupmatcher.dto.UserDTO;
 import ch.uzh.soprafs22.groupmatcher.model.Answer;
 import ch.uzh.soprafs22.groupmatcher.model.Matcher;
@@ -87,9 +87,9 @@ public class MatcherService {
 
     @Transactional
     public List<Matcher> initMatching() {
-        return matcherRepository.findByDueDateIsBeforeAndStatus(ZonedDateTime.now(), Status.ACTIVE)
+        return matcherRepository.findByDueDateIsBeforeAndStatus(ZonedDateTime.now(), MatcherStatus.ACTIVE)
                 .stream().map(matcher -> {
-                    matcher.setStatus(Status.MATCHING);
+                    matcher.setStatus(MatcherStatus.MATCHING);
                     Matcher updatedMatcher = matcherRepository.save(matcher);
                     log.info("Initialising matching procedure for Matcher {}", matcher.getId());
                     return switch (updatedMatcher.getMatchingStrategy()) {
@@ -123,7 +123,7 @@ public class MatcherService {
             }
             matcher.getTeams().add(newTeam);
         });
-        matcher.setStatus(Status.MATCHED);
+        matcher.setStatus(MatcherStatus.MATCHED);
         return matcherRepository.save(matcher);
     }
 
@@ -177,7 +177,7 @@ public class MatcherService {
             matcher.getTeams().add(team);
             teamRepository.save(team);
         });
-        matcher.setStatus(Status.MATCHED);
+        matcher.setStatus(MatcherStatus.MATCHED);
         return matcherRepository.save(matcher);
     }
 }

@@ -13,41 +13,34 @@
             <a th:href="${frontendURL}"><img src="../logo.png" th:src="|cid:logo.png|" style="height: 35%;width: 35%;"></img></a>
         </td>
     </tr>
-    <tr style="background-image: url('../bg.png');background-size: 100% auto;background-color: white;"
-        th:style="|background: url(cid:bg.png);background-size: 100% auto;background-color: white;|">
-        <td style="text-align: center;padding: 5rem;">
+    <tr style="background-image: url('../bg.png');background-size: 100% auto;background-color: white;text-align: center;"
+        th:style="|background: url(cid:bg.png);background-size: 100% auto;background-color: white;text-align: center;|">
+        <td style="text-align: center;padding: 5rem;font-size: 1rem;">
             <h1 style="color: #222222;font-size: 2.5rem;text-align: center;">
                 <span style="background: white;">Here are your results!</span>
             </h1>
             <p style="padding-bottom: 3rem; line-height: 1.5;">
                 <span style="background: white;white-space: pre-line">
-                    Hurray! You've been matched into a group for<strong th:text="${courseName}"></strong>
+                    Hurray! You've been matched into a group for <strong th:text="${courseName}"></strong>
                 </span>
                 <span style="background: white;white-space: pre-line">
                     Meet your new team members and get started on your group work:
-            <table>
-                <thead>
-                <tr>
-                    <th> Students </th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:if="${names.empty}">
-                    <td colspan="2"> No Emails Available </td>
-                </tr>
-                <tr th:each="name : ${names}">
-                    <td><span th:text="${name}"> Name </span></td>
-                </tr>
-                <tr th:if="${emails.empty}">
-                    <td colspan="2"> No Emails Available </td>
-                </tr>
-                <tr th:each="email : ${emails}">
-                    <td><span th:text="${email}"> Email </span></td>
-                </tr>
-                </tbody>
-            </table>
                 </span>
             </p>
+            <table style="margin: 0 auto;">
+                <tr>
+                    <td>
+                        <strong>Name</strong>
+                    </td>
+                    <td>
+                        <strong>Email</strong>
+                    </td>
+                </tr>
+                <tr th:each="student : ${students}">
+                    <td><span th:text="${student.name}"></span></td>
+                    <td><span th:text="${student.email}"></span></td>
+                </tr>
+            </table>
         </td>
     </tr>
     <tr style="background-color: #877ef1;">

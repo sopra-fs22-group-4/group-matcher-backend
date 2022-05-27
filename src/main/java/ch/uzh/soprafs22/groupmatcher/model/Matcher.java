@@ -1,7 +1,7 @@
 package ch.uzh.soprafs22.groupmatcher.model;
 
 import ch.uzh.soprafs22.groupmatcher.constant.MatchingStrategy;
-import ch.uzh.soprafs22.groupmatcher.constant.Status;
+import ch.uzh.soprafs22.groupmatcher.constant.MatcherStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,7 +34,7 @@ public class Matcher {
     private ZonedDateTime dueDate;
 
     @Enumerated(EnumType.STRING)
-    private Status status = Status.DRAFT;
+    private MatcherStatus status = MatcherStatus.DRAFT;
 
     @Enumerated(EnumType.STRING)
     private MatchingStrategy matchingStrategy;

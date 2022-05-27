@@ -1,5 +1,6 @@
 package ch.uzh.soprafs22.groupmatcher.model;
 
+import ch.uzh.soprafs22.groupmatcher.constant.AdminStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -17,7 +18,6 @@ public class Admin {
     @GeneratedValue
     private Long id;
 
-    @Column(nullable = false)
     private String email;
 
     @JsonIgnore
@@ -25,8 +25,8 @@ public class Admin {
 
     private String name;
 
-    @Column(nullable = false)
-    private boolean verified = false;
+    @JsonIgnore
+    private AdminStatus status;
 
     @JsonIgnore
     @ManyToMany(mappedBy = "collaborators",cascade = CascadeType.ALL)
@@ -34,5 +34,9 @@ public class Admin {
 
     public boolean getHasPassword() {
         return !Strings.isNullOrEmpty(password);
+    }
+
+    public boolean isVerified() {
+        return status == AdminStatus.VERIFIED;
     }
 }

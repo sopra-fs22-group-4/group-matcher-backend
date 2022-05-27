@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Matching Quiz Invitation</title>
+    <title>Verify Your Email Address</title>
 </head>
 <body style="font-family: Helvetica, sans-serif;">
 <table style="min-width: 100%; border-collapse: separate; border-spacing: 0 2rem; background-color: #877ef1;">
@@ -15,29 +15,23 @@
     </tr>
     <tr style="background-image: url('../bg.png');background-size: 100% auto;background-color: white;"
         th:style="|background: url(cid:bg.png);background-size: 100% auto;background-color: white;|">
-        <td style="text-align: center;padding: 5rem;font-size: 1rem;">
+        <td style="text-align: center;padding: 5rem;font-size: 1rem;font-size: 1rem;">
             <h1 style="color: #222222;font-size: 2.5rem;text-align: center;">
-                <span style="background: white;">Ready to be matched?</span>
+                <span style="background: white;">You are invited to groupmatcher!</span>
             </h1>
-            <p style="padding-bottom: 3rem; line-height: 1.5;">
-                <span style="background: white;white-space: pre-line">
-                    You've been invited to a group matching project for <strong th:text="${courseName}"></strong>
-                    To be matched into your dream team, all you have to do is fill out a
-                    small questionnaire about your work style and skills until <strong th:text="${dueDate}"></strong>.
-                    No preparation is necessary!
-                </span>
+            <p style="padding: 3rem; line-height: 1.5;">
                 <span style="background: white;white-space: pre-line;">
-                    We are doing our very best to build fair and diverse teams with our smart
-                    matching algorithm. It's especially important to us that teams complement and
-                    learn from each other - so be honest ;-)
+                    You are invited you to collaborate on a group matcher for
+                    the course <strong th:text="${courseName}"></strong>.
+                    Follow the link below to join your team and get started!
                 </span>
             </p>
-            <a th:href="${matcherURL}" style="padding: 1rem; font-weight: bold; font-size: 1.2rem; letter-spacing: -0.5px;
+            <a th:href="${joinURL}" style="padding: 1rem; font-weight: bold; font-size: 1.2rem; letter-spacing: -0.5px;
             text-align: center; text-decoration: none; color: white; border-radius: 7px; background-color: #877EF1;
             border: none; cursor: pointer;"
                onmouseover="this.style.backgroundColor='#766bef'"
                onmouseleave="this.style.backgroundColor='#877EF1'">
-                Start Matching Quiz
+                <strong th:text="${buttonLabel}"></strong>
             </a>
         </td>
     </tr>
