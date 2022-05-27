@@ -25,6 +25,27 @@
                 </span>
                 <span style="background: white;white-space: pre-line">
                     Meet your new team members and get started on your group work:
+            <table>
+                <thead>
+                <tr>
+                    <th> Students </th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${names.empty}">
+                    <td colspan="2"> No Emails Available </td>
+                </tr>
+                <tr th:each="name : ${names}">
+                    <td><span th:text="${name}"> Name </span></td>
+                </tr>
+                <tr th:if="${emails.empty}">
+                    <td colspan="2"> No Emails Available </td>
+                </tr>
+                <tr th:each="email : ${emails}">
+                    <td><span th:text="${email}"> Email </span></td>
+                </tr>
+                </tbody>
+            </table>
                 </span>
             </p>
         </td>
