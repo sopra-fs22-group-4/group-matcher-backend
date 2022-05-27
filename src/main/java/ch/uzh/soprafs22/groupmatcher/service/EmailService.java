@@ -22,6 +22,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,6 +97,17 @@ public class EmailService {
             log.info("Sending matching results to students of Matcher {}", matcher.getId());
             matcher.getTeams().forEach(team -> {
                 Map<String, Object> variables = parseMatcherVariables(matcher);
+                List<Student> students = team.getStudents();
+                List<String> studentNames = new ArrayList<>();
+                List<String> studentEmails = new ArrayList<>();
+
+                students.forEach( student -> {
+                    studentNames.add(student.getName());
+                    studentEmails.add(student.getEmail());
+                });
+
+                variables.put("names", studentNames);
+                variables.put("emails", studentEmails);
                 mailSender.send(composeMessage("Group Introduction", "matching_results.html",
                         variables, mapToRecipients(team.getStudents())));
                 team.setNotified(true);
