@@ -61,8 +61,7 @@ public class AdminService {
     }
 
     private void findOrCreateAccount(Matcher matcher, UserDTO collaboratorDTO) {
-        Admin collaborator = Optional.ofNullable(collaboratorDTO.getId()).map(this::getAdminById)
-                .or(() -> adminRepository.findByEmail(collaboratorDTO.getEmail()))
+        Admin collaborator = adminRepository.findByEmail(collaboratorDTO.getEmail())
                 .orElse(createCollaborator(collaboratorDTO));
         emailService.sendCollaboratorInviteEmail(matcher, collaborator);
         matcher.getCollaborators().add(collaborator);
@@ -152,7 +151,7 @@ public class AdminService {
                     existingMatcher.getStudents().add(newStudent);
                 });
         matcherDTO.getCollaborators().forEach(collaboratorDTO -> {
-            if (!adminRepository.existsByMatchers_IdAndEmail(matcherId, collaboratorDTO.getEmail()))
+            if (existingMatcher.getCollaborators().stream().noneMatch(admin -> admin.getEmail().equals(collaboratorDTO.getEmail())))
                 findOrCreateAccount(existingMatcher, collaboratorDTO);
         });
         return notifyAndSave(existingMatcher, adminId, " updated matcher settings");
